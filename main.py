@@ -360,9 +360,10 @@ cubeinit(cube)
 moveit(cube, up)
 moveit(cube, left_prime)
 moveit(cube, up)
-
+#bug description:
 #R and L sides reflected across y axis
 #D is flipped x axis
+#Problem is most likely with the cube environment, not the actions themselves
 
 # moveit(cube, up_prime)
 
