@@ -356,19 +356,27 @@ def update_and_encode():
 ''' ACTIONS BELOW '''
 
 cubeinit(cube)
-moveit(cube, up)
-moveit(cube, up_prime)
-moveit(cube, down)
-moveit(cube, down_prime)
-moveit(cube, front)
-moveit(cube, front_prime)
-moveit(cube, back)
-moveit(cube, back_prime)
-moveit(cube, left)
-moveit(cube, left_prime)
-moveit(cube, right)
-moveit(cube, right_prime)
 
-scramble_cube(cube, 5)
+moveit(cube, up)
+moveit(cube, left_prime)
+moveit(cube, up)
+
+#R and L sides reflected across y axis
+#D is flipped x axis
+
+# moveit(cube, up_prime)
+
+# moveit(cube, down)
+# moveit(cube, down_prime)
+# moveit(cube, front)
+# moveit(cube, front_prime)
+# moveit(cube, back)
+# moveit(cube, back_prime)
+# moveit(cube, left)
+# moveit(cube, left_prime)
+# moveit(cube, right)
+# moveit(cube, right_prime)
+
+# scramble_cube(cube, 2)
 
 update_and_encode()
