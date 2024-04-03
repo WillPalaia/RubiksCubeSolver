@@ -20,13 +20,10 @@ def rotate_face_clockwise(face):
     """Rotates a face 90 degrees clockwise."""
     return [list(row) for row in zip(*face[::-1])]
 
-def rotate_face_counter_clockwise(face):
-    """Rotates a face 90 degrees counter-clockwise."""
-    return [list(row)[::-1] for row in zip(*face)]
-
 def front_prime(cube):
     # Rotate the front face counter-clockwise
-    cube['F'] = rotate_face_clockwise(cube['F'])
+    for _ in range(3):
+        cube['F'] = rotate_face_clockwise(cube['F'])
 
     # Temporarily store the edges that will be moved
     temp_top = cube['U'][2].copy()  # Copy is used to prevent aliasing
@@ -62,7 +59,8 @@ def front(cube):
 
 def back_prime(cube):
     # Rotate the back face counter-clockwise
-    cube['B'] = rotate_face_clockwise(cube['B'])
+    for _ in range(3):
+        cube['B'] = rotate_face_clockwise(cube['B'])
 
     # Temporarily store the edges that will be moved
     temp_top = cube['U'][0].copy()  # Top row of the up face, to be moved to the right
@@ -115,7 +113,7 @@ def right(cube):
 
 def right_prime(cube):
     # Rotate the right face counterclockwise
-    for _ in range(3):  # Rotate counterclockwise by rotating clockwise 3 times
+    for _ in range(3):
         cube['R'] = rotate_face_clockwise(cube['R'])
 
     # Temporarily store the edges that will be moved, in reverse order compared to 'right'
@@ -150,7 +148,8 @@ def left(cube):
 
 def left_prime(cube):
     # Rotate the left face counter-clockwise
-    cube['L'] = rotate_face_clockwise(cube['L'])
+    for _ in range(3):
+        cube['L'] = rotate_face_clockwise(cube['L'])
 
     # Temporarily store the edges that will be moved
     temp_top = [row[0] for row in cube['U']]  # Left column of the up face
@@ -162,8 +161,8 @@ def left_prime(cube):
     for i in range(3):
         cube['U'][i][0] = temp_front[i]
         cube['F'][i][0] = temp_down[i]
-        cube['D'][i][0] = temp_back[2 - i]  # Reverse the order for the back face
-        cube['B'][i][0] = temp_top[2 - i]  # Reverse the order for the up face
+        cube['D'][i][0] = temp_back[2- i]  # Reverse the order for the back face
+        cube['B'][2 - i][0] = temp_top[i]  # Reverse the order for the up face
 
 def up(cube):
     # Rotate the up face clockwise
@@ -171,9 +170,9 @@ def up(cube):
 
     # Temporarily store the edges that will be moved
     temp_front = cube['F'][0].copy()  # Top row of the front face
-    temp_right = cube['R'][0].copy()  # Top row of the right face
-    temp_back = cube['B'][0].copy()  # Top row of the back face
-    temp_left = cube['L'][0].copy()  # Top row of the left face
+    temp_right = cube['R'][2].copy()  # Top row of the right face
+    temp_back = cube['B'][2].copy()  # Top row of the back face
+    temp_left = cube['L'][2].copy()  # Top row of the left face
 
     # Swap the edges
     cube['F'][0] = temp_right  # Move the top row of the left face to the front
@@ -182,8 +181,8 @@ def up(cube):
     cube['L'][0] = temp_front  # Move the top row of the back face to the left
 
 def up_prime(cube):
-    # Rotate the up face counter-clockwise
-    cube['U'] = rotate_face_clockwise(cube['U'])
+    for _ in range(3):
+        cube['U'] = rotate_face_clockwise(cube['U'])
 
     # Temporarily store the edges that will be moved
     temp_front = cube['F'][0].copy()  # Top row of the front face
@@ -199,7 +198,8 @@ def up_prime(cube):
 
 def down_prime(cube):
     # Rotate the down face clockwise
-    cube['D'] = rotate_face_clockwise(cube['D'])
+    for _ in range(3):
+        cube['D'] = rotate_face_clockwise(cube['D'])
 
     # Temporarily store the edges that will be moved
     temp_front = cube['F'][2].copy()  # Bottom row of the front face
@@ -363,7 +363,7 @@ cubeinit(cube)
 
 moveit(cube, up)
 moveit(cube, left_prime)
-#moveit(cube, up)
+# moveit(cube, up)
 #bug description:
 #R and L sides reflected across y axis
 #D is flipped x axis
@@ -384,4 +384,4 @@ moveit(cube, left_prime)
 
 # scramble_cube(cube, 2)
 
-#update_and_encode()
+# update_and_encode()
