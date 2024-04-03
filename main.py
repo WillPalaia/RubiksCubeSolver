@@ -20,6 +20,10 @@ def rotate_face_clockwise(face):
     """Rotates a face 90 degrees clockwise."""
     return [list(row) for row in zip(*face[::-1])]
 
+def rotate_face_counter_clockwise(face):
+    """Rotates a face 90 degrees counter-clockwise."""
+    return [list(row)[::-1] for row in zip(*face)]
+
 def front_prime(cube):
     # Rotate the front face counter-clockwise
     cube['F'] = rotate_face_clockwise(cube['F'])
@@ -359,7 +363,7 @@ cubeinit(cube)
 
 moveit(cube, up)
 moveit(cube, left_prime)
-moveit(cube, up)
+#moveit(cube, up)
 #bug description:
 #R and L sides reflected across y axis
 #D is flipped x axis
@@ -380,4 +384,4 @@ moveit(cube, up)
 
 # scramble_cube(cube, 2)
 
-update_and_encode()
+#update_and_encode()
