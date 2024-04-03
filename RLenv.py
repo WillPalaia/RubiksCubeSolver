@@ -17,6 +17,10 @@ def rotate_face_clockwise(face):
     """Rotates a face 90 degrees clockwise."""
     return [list(row) for row in zip(*face[::-1])]
 
+def rotate_face_counter_clockwise(face):
+    """Rotates a face 90 degrees counter-clockwise."""
+    return [list(row)[::-1] for row in zip(*face)]
+
 class RubiksCubeEnv(gym.Env):
     metadata = {'render.modes': ['console']}
 
