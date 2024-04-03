@@ -384,8 +384,4 @@ moveit(cube, left_prime)
 
 # scramble_cube(cube, 2)
 
-<<<<<<< HEAD
 # update_and_encode()
-=======
-# update_and_encode()
->>>>>>> 55366158651215927420c4633c854f001db407d1
