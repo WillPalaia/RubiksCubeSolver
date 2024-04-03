@@ -111,8 +111,7 @@ def right(cube):
 
 def right_prime(cube):
     # Rotate the right face counterclockwise
-    for _ in range(3):  # Rotate counterclockwise by rotating clockwise 3 times
-        cube['R'] = rotate_face_clockwise(cube['R'])
+    cube['R'] = rotate_face_clockwise(cube['R'])
 
     # Temporarily store the edges that will be moved, in reverse order compared to 'right'
     temp_top = [row[2] for row in cube['U']]  # Right column of the up face
@@ -146,7 +145,7 @@ def left(cube):
 
 def left_prime(cube):
     # Rotate the left face counter-clockwise
-    cube['L'] = rotate_face_clockwise(cube['L'])
+    cube['L'] = rotate_face_counter_clockwise(cube['L'])
 
     # Temporarily store the edges that will be moved
     temp_top = [row[0] for row in cube['U']]  # Left column of the up face
@@ -158,8 +157,8 @@ def left_prime(cube):
     for i in range(3):
         cube['U'][i][0] = temp_front[i]
         cube['F'][i][0] = temp_down[i]
-        cube['D'][i][0] = temp_back[2 - i]  # Reverse the order for the back face
-        cube['B'][i][0] = temp_top[2 - i]  # Reverse the order for the up face
+        cube['D'][i][0] = temp_back[2- i]  # Reverse the order for the back face
+        cube['B'][2 - i][0] = temp_top[i]  # Reverse the order for the up face
 
 def up(cube):
     # Rotate the up face clockwise
@@ -167,9 +166,9 @@ def up(cube):
 
     # Temporarily store the edges that will be moved
     temp_front = cube['F'][0].copy()  # Top row of the front face
-    temp_right = cube['R'][0].copy()  # Top row of the right face
-    temp_back = cube['B'][0].copy()  # Top row of the back face
-    temp_left = cube['L'][0].copy()  # Top row of the left face
+    temp_right = cube['R'][2].copy()  # Top row of the right face
+    temp_back = cube['B'][2].copy()  # Top row of the back face
+    temp_left = cube['L'][2].copy()  # Top row of the left face
 
     # Swap the edges
     cube['F'][0] = temp_right  # Move the top row of the left face to the front
@@ -359,7 +358,7 @@ cubeinit(cube)
 
 moveit(cube, up)
 moveit(cube, left_prime)
-moveit(cube, up)
+# moveit(cube, up)
 #bug description:
 #R and L sides reflected across y axis
 #D is flipped x axis
@@ -380,4 +379,4 @@ moveit(cube, up)
 
 # scramble_cube(cube, 2)
 
-update_and_encode()
+# update_and_encode()
