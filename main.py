@@ -375,6 +375,6 @@ cubeinit(cube)
 # moveit(cube, right_prime)
 # moveit(cube, back)
 
-scramble_cube(cube, 25)
+# scramble_cube(cube, 25)
 
 # update_and_encode()
