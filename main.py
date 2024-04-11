@@ -1,8 +1,8 @@
 import random
 import numpy as np
 import gymnasium as gym
-import main
-from main import cube, print_cube, up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime
+import rubiks
+from rubiks import cube, print_cube, up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime
 from stable_baselines3 import PPO
 
 # Use observation space definition to numerically represent Rubik's cube
