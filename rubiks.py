@@ -1,5 +1,4 @@
 # hello world
-
 import random
 import os
 import platform
@@ -287,26 +286,26 @@ def scramble_cube(cube, num_moves):
     movelist = []
     timestep = 1
 
-    cubeinit(cube)
+    # cubeinit(cube)
 
     for _ in range(num_moves):
-        clear_terminal()
+        # clear_terminal()
         move = random.choice(moves)
         movelist.append(move)
         move_functions[move](cube)  # Apply the selected move to the cube
         
-        print(f"Scrambling {num_moves} times... \n")
-        print_cube(cube)
-        sleep(timestep)
+        # print(f"Scrambling {num_moves} times... \n")
+        # print_cube(cube)
+        # sleep(timestep)
 
-    print()
-    print("Scramble:", ', '.join(movelist))
+    #print()
+    #print("Scramble:", ', '.join(movelist))
 
     # Invert and reverse the move list
-    inverted_movelist = [invert_move(move) for move in reversed(movelist)]
+    #inverted_movelist = [invert_move(move) for move in reversed(movelist)]
     # Create a string representation of the reversed and inverted move list
-    reversed_moves_str = ', '.join(inverted_movelist)
-    print("Undo:", reversed_moves_str)
+    #reversed_moves_str = ', '.join(inverted_movelist)
+    #print("Undo:", reversed_moves_str)
 
     return cube
 
@@ -318,7 +317,6 @@ def invert_move(move):
 
 def moveit(cube, action, times=1):
     for x in range(times):
-        clear_terminal()
         action(cube)
         print_cube(cube)
         sleep(0.5)
@@ -362,7 +360,8 @@ def update_and_encode():
 
 ''' ACTIONS BELOW '''
 
-cubeinit(cube)
+# cubeinit(cube)
+# print_cube(cube)
 
 # moveit(cube, down)
 # moveit(cube, up_prime)
