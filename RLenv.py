@@ -2,7 +2,7 @@ import random
 import numpy as np
 import gymnasium as gym
 import main
-from main import cube, print_cube, up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime
+from main import cube, print_cube, up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime, scramble_cube
 from stable_baselines3 import PPO
 
 # Use observation space definition to numerically represent Rubik's cube
@@ -108,12 +108,32 @@ def train_rubiks_cube_solver():
 #     obs, rewards, dones, info = vec_env.step(action)
 #     vec_env.render("human")
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
     #new_cube = RubiksCubeEnv()
     #new_cube.reset()
-    train_rubiks_cube_solver()
+    #train_rubiks_cube_solver()
 
 
-# from niko:
-# lets use moveit() function in render() to visualize the cube
-# lets make sure is_solved() works
+
+
+#Tests for is_solved method - works properly
+def test_is_solved():
+    # Create an instance of your Rubik's cube environment
+    env = RubiksCubeEnv()
+
+    # Test with a solved cube
+    env.reset()  # Assuming this method resets the cube to the solved state
+    result = env.is_solved()
+    print(f"is_solved returned {result} for a solved cube")
+    assert result, "is_solved should return True for a solved cube"
+
+    # Test with an unsolved cube
+    up(env.cube)
+    right(env.cube)
+    front_prime(env.cube)
+    result = env.is_solved()
+    print(f"is_solved returned {result} for a scrambled cube")
+    assert not result, "is_solved should return False for a scrambled cube"
+
+# Run the tests
+test_is_solved()
