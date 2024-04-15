@@ -2,7 +2,7 @@ import random
 import numpy as np
 import gymnasium as gym
 import rubiks
-from rubiks import cube, scramble_cube, print_cube, moveit, update_and_encode, up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime
+from rubiks import cube, scramble_cube, print_cube, moveit, onehotstate, up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime
 from stable_baselines3 import PPO
 
 # Define colors and faces
@@ -60,18 +60,17 @@ class RubiksCubeEnv(gym.Env):
             'U': np.array([[[0, 0, 0, 0, 1, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Blue
             'D': np.array([[[0, 0, 0, 0, 0, 1] for _ in range(3)] for _ in range(3)], dtype=np.uint8)  # Green
         }
-        # shape is the issue (54 input space error)
         return cube
 
     def reset(self, seed=None):
-        print(f"RESET CUBE")
-        cube = self.initialize_cube()
-        cube = scramble_cube(self.cube, 3) # niko added this 4/11
-        state = np.array(list(cube.values())).flatten()
+        # print(f"Resetting...")
+        self.cube = self.initialize_cube()
+        self.cube = scramble_cube(self.cube, 3) # niko added this 4/11
+        state = np.array(list(self.cube.values())).flatten()
         self.current_state = state
         self.time = 0
         return self.current_state, {}
-    
+
     def is_solved(self):
         for face in self.cube.values():
             # Convert face to a NumPy array if it's not already one
@@ -89,11 +88,16 @@ class RubiksCubeEnv(gym.Env):
 
     def step(self, action):
         self.time += 1
-        self.action_to_function[action](self.cube) # retrieves action from action_to_function dictionary, passing the current state as an argument
-        # self.up(self.cube)
+        action = int(action)
+        self.action_to_function[action](self.cube) # retrieves action from action_to_function list, passing the current state as an argument
+        # print(f"action: {self.action_to_function[action]}")
         done = self.is_solved()
-        time_out = self.time >= 1000  # Limit to 1000 moves
-        reward = 0 if done else -1
+        time_out = self.time >= 20  # Limit to x moves
+        if done:
+            reward = 0
+        else:
+            reward = -1
+        # reward = 10 if done else -1
         # cube = self.cube() # niko thinks comment this out (gpt told me to)
         state = np.array(list(self.cube.values())).flatten()
         return state, reward, done or time_out, False, {}
@@ -101,26 +105,21 @@ class RubiksCubeEnv(gym.Env):
     def render(self, mode='console'):
         if mode != 'console':
             raise NotImplementedError("Only 'console' mode is currently implemented for rendering.")
-        
         # Call the print_cube function with the current cube state
-        self.print_cube(self.cube)
-        rendered_cube = self.generate_rendered_cube()
-    
+        render = print_cube(self.cube)
         # Print the rendered cube to the console
-        print(rendered_cube)
-    
-        # Optionally, return the rendered cube as a string
-        return rendered_cube
+        print(render)
 
 def train_rubiks_cube_solver():
     # Create Rubik's Cube environment
     env = RubiksCubeEnv()
+    env.reset()
 
     # Create PPO agent
     model = PPO("MlpPolicy", env, verbose=1)
 
     # Train the agent
-    total_timesteps = 10000 # Adjust as needed
+    total_timesteps = 100000 # Adjust as needed
     model.learn(total_timesteps=total_timesteps)
 
     # Save the trained model
@@ -135,20 +134,18 @@ def train_rubiks_cube_solver():
     for i in range(1000):
         action = model.predict(obs, deterministic=True)
         obs, rewards, dones, info = vec_env.step(action)
-    # vec_env.render("human")
+    # print_cube(env.cube)
 
-env = RubiksCubeEnv()
-
-# These imported functions are not working; do we need them to?
-update_and_encode()
-print(f"Is solved? {env.is_solved()}")
-
+# env = RubiksCubeEnv()
+# print(f"Is solved? {env.is_solved()}")
+# up(env.cube)
+# print(f"Is solved? {env.is_solved()}")
+# up_prime(env.cube)
+# print(f"Is solved? {env.is_solved()}")
+# print_cube(env.cube)
+# moveit(env.cube, left)
 
 if __name__ == "__main__":
-    #new_cube = RubiksCubeEnv()
-    #new_cube.reset()
+    # new_cube = RubiksCubeEnv()
+    # new_cube.reset()
     train_rubiks_cube_solver()
-
-# from niko:
-# lets use moveit() function in render() to visualize the cube
-# lets make sure is_solved() works

@@ -77,8 +77,8 @@ def back(cube):
     temp_bottom = cube['D'][2].copy()  # Top row of the down face
 
     # Adjust the edges according to the back move
-    cube['U'][0] = temp_right[::-1]
-    cube['D'][2] = temp_left[::-1]
+    cube['U'][0] = temp_right[::]
+    cube['D'][2] = temp_left[::]
 
     for i in range(3):
         cube['L'][i][0] = temp_top[2 - i]
@@ -87,7 +87,8 @@ def back(cube):
 # Correct orientation and swapping of edges for back_prime
 def back_prime(cube):
     # Rotate the back face clockwise
-    cube['B'] = rotate_face_clockwise(cube['B'])
+    for _ in range(3):
+        cube['B'] = rotate_face_clockwise(cube['B'])
 
     # Temporarily store the edges that will be moved
     temp_top = cube['U'][0].copy()  # Copy to prevent aliasing
@@ -315,23 +316,23 @@ def scramble_cube(cube, num_moves):
     cubeinit(cube)
 
     for _ in range(num_moves):
-        clear_terminal()
+        # clear_terminal()
         move = random.choice(moves)
         movelist.append(move)
         move_functions[move](cube)  # Apply the selected move to the cube
         
-        print(f"Scrambling {num_moves} times... \n")
-        print_cube(cube)
-        sleep(timestep)
+        # print(f"Scrambling {num_moves} times... \n")
+        # print_cube(cube)
+        # sleep(timestep)
 
-    print()
-    print("Scramble:", ', '.join(movelist))
+    # print()
+    # print("Scramble:", ', '.join(movelist))
 
     # Invert and reverse the move list
     inverted_movelist = [invert_move(move) for move in reversed(movelist)]
     # Create a string representation of the reversed and inverted move list
-    reversed_moves_str = ', '.join(inverted_movelist)
-    print("Undo:", reversed_moves_str)
+    # reversed_moves_str = ', '.join(inverted_movelist)
+    # print("Undo:", reversed_moves_str)
 
     return cube
 
@@ -343,23 +344,25 @@ def invert_move(move):
 
 def moveit(cube, action, times=1):
     for x in range(times):
-        clear_terminal()
+        # clear_terminal()
         action(cube)
-        print_cube(cube)
-        sleep(0.5)
-
+        # print_cube(cube)
+        # sleep(0.5)
 
 def cubeinit(cube):
-    clear_terminal()
-    print_cube(cube)
-    sleep(1)
+    # clear_terminal()
+    # print_cube(cube)
+    # sleep(1)
+    None
 
+def onehotstate(cube):
+    concatenated_array = np.concatenate([cube[face].flatten() for face in ['U', 'D', 'F', 'B', 'L', 'R']])
+    return concatenated_array
 
 ''' ACTIONS BELOW '''
 
-
 # print(cube)
-cubeinit(cube)
+# cubeinit(cube)
 # print_cube(cube)
 
 # moveit(cube, down)
@@ -375,6 +378,6 @@ cubeinit(cube)
 # moveit(cube, left)
 # moveit(cube, left_prime)
 
-scramble_cube(cube, 2)
-print(cube)
-# update_and_encode()
+# scramble_cube(cube, 20)
+# print(cube)
+# print(onehotstate(cube))
