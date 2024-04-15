@@ -37,10 +37,6 @@ def color_encoding(color):
     elif color == "green":
         return np.array([0, 0, 0, 0, 0, 1], dtype=np.uint8)
 
-#flattened_cube = rubikscube.print_cube(cube)
-#flattened_observation = flatten_cube(cube)
-#print(flattened_observation)
-
 class RubiksCubeEnv(gym.Env):
     def __init__(self):
         self.action_space = gym.spaces.Discrete(12)  # Assuming 12 possible rotations
@@ -65,7 +61,7 @@ class RubiksCubeEnv(gym.Env):
     def reset(self, seed=None):
         # print(f"Resetting...")
         self.cube = self.initialize_cube()
-        self.cube = scramble_cube(self.cube, 3) # niko added this 4/11
+        self.cube = scramble_cube(self.cube, 10)
         state = np.array(list(self.cube.values())).flatten()
         self.current_state = state
         self.time = 0
@@ -88,18 +84,27 @@ class RubiksCubeEnv(gym.Env):
 
     def step(self, action):
         self.time += 1
+        
+        prev_state = self.manhattan_distance(self.cube)
+
         action = int(action)
         self.action_to_function[action](self.cube) # retrieves action from action_to_function list, passing the current state as an argument
-        # print(f"action: {self.action_to_function[action]}")
+        # print(f"Action: {self.action_to_function[action]}")
+
         done = self.is_solved()
-        time_out = self.time >= 20  # Limit to x moves
-        if done:
-            reward = 0
-        else:
-            reward = -1
-        # reward = 10 if done else -1
-        # cube = self.cube() # niko thinks comment this out (gpt told me to)
+        time_out = self.time >= 40  # Limit to x moves
+
         state = np.array(list(self.cube.values())).flatten()
+        
+        if done:
+            reward = 1000
+            return state, reward, done or time_out, False, {}
+        else:
+            # Default reward based on improvement in Manhattan distance
+            reward = prev_state - self.manhattan_distance(self.cube)
+            # if time_out:
+            #     reward -= 100  # Penalty for exceeding the time limit
+
         return state, reward, done or time_out, False, {}
 
     def render(self, mode='console'):
@@ -109,6 +114,17 @@ class RubiksCubeEnv(gym.Env):
         render = print_cube(self.cube)
         # Print the rendered cube to the console
         print(render)
+    
+    def manhattan_distance(self, solved_state):
+        total_distance = 0
+
+        # Iterate over each face and calculate discrepancies
+        for face in ['F', 'R', 'B', 'L', 'U', 'D']:
+            # Count how many facelets per face are not matching the solved state
+            face_distance = np.sum(np.argmax(cube[face], axis=2) != np.argmax(solved_state[face], axis=2))
+            total_distance += face_distance
+
+        return total_distance
 
 def train_rubiks_cube_solver():
     # Create Rubik's Cube environment
@@ -119,14 +135,14 @@ def train_rubiks_cube_solver():
     model = PPO("MlpPolicy", env, verbose=1)
 
     # Train the agent
-    total_timesteps = 100000 # Adjust as needed
+    total_timesteps = 250000
     model.learn(total_timesteps=total_timesteps)
 
     # Save the trained model
-    model.save("rubiks_cube_model")
+    model.save("rubiks_cube_model-2")
 
     # Load the trained agent
-    model.load("rubiks_cube_model", env=env)
+    model.load("rubiks_cube_model-2", env=env)
 
     # Enjoy trained agent
     vec_env = model.get_env()   
@@ -137,15 +153,17 @@ def train_rubiks_cube_solver():
     # print_cube(env.cube)
 
 # env = RubiksCubeEnv()
+# solved_state = env.initialize_cube()
+
 # print(f"Is solved? {env.is_solved()}")
 # up(env.cube)
 # print(f"Is solved? {env.is_solved()}")
-# up_prime(env.cube)
+# left_prime(env.cube)
 # print(f"Is solved? {env.is_solved()}")
 # print_cube(env.cube)
 # moveit(env.cube, left)
 
+# print(RubiksCubeEnv().manhattan_distance(env.cube))
+
 if __name__ == "__main__":
-    # new_cube = RubiksCubeEnv()
-    # new_cube.reset()
     train_rubiks_cube_solver()
