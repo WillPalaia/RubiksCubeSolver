@@ -66,7 +66,7 @@ class RubiksCubeEnv(gym.Env):
     def reset(self, seed=None):
         print(f"RESET CUBE")
         cube = self.initialize_cube()
-        cube = scramble_cube(cube, 3) # niko added this 4/11
+        cube = scramble_cube(self.cube, 3) # niko added this 4/11
         state = np.array(list(cube.values())).flatten()
         self.current_state = state
         self.time = 0
@@ -89,7 +89,8 @@ class RubiksCubeEnv(gym.Env):
 
     def step(self, action):
         self.time += 1
-        self.action_to_function[action](self.cube)
+        self.action_to_function[action](self.cube) # retrieves action from action_to_function dictionary, passing the current state as an argument
+        # self.up(self.cube)
         done = self.is_solved()
         time_out = self.time >= 1000  # Limit to 1000 moves
         reward = 0 if done else -1
@@ -132,7 +133,7 @@ def train_rubiks_cube_solver():
     vec_env = model.get_env()   
     obs = vec_env.reset()
     for i in range(1000):
-        action, _states = model.predict(obs, deterministic=True)
+        action = model.predict(obs, deterministic=True)
         obs, rewards, dones, info = vec_env.step(action)
     # vec_env.render("human")
 
