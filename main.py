@@ -60,13 +60,13 @@ class RubiksCubeEnv(gym.Env):
             'U': np.array([[[0, 0, 0, 0, 1, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Blue
             'D': np.array([[[0, 0, 0, 0, 0, 1] for _ in range(3)] for _ in range(3)], dtype=np.uint8)  # Green
         }
-        
+        # shape is the issue (54 input space error)
         return cube
 
     def reset(self, seed=None):
         print(f"RESET CUBE")
         cube = self.initialize_cube()
-        cube = scramble_cube(cube, 2) # niko added this 4/11
+        cube = scramble_cube(cube, 3) # niko added this 4/11
         state = np.array(list(cube.values())).flatten()
         self.current_state = state
         self.time = 0

@@ -9,6 +9,7 @@ face_keys = ['F', 'R', 'B', 'L', 'U', 'D']
 colors = ['White', 'Red', 'Yellow', 'Orange', 'Blue', 'Green']
 # Initialize the cube
 cube = {face: [[colors[i] for _ in range(3)] for _ in range(3)] for i, face in enumerate(face_keys)}
+# change cube to nparray and fix all functions
 
 def clear_terminal():
     os_name = platform.system()
@@ -360,6 +361,8 @@ def update_and_encode():
 
 ''' ACTIONS BELOW '''
 
+
+print(cube)
 # cubeinit(cube)
 # print_cube(cube)
 
