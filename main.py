@@ -1,4 +1,4 @@
-import random
+import math
 import numpy as np
 import gymnasium as gym
 import rubiks
@@ -61,7 +61,7 @@ class RubiksCubeEnv(gym.Env):
     def reset(self, seed=None):
         # print(f"Resetting...")
         self.cube = self.initialize_cube()
-        self.cube = scramble_cube(self.cube, 10)
+        self.cube = scramble_cube(self.cube, 5)
         state = np.array(list(self.cube.values())).flatten()
         self.current_state = state
         self.time = 0
@@ -92,18 +92,24 @@ class RubiksCubeEnv(gym.Env):
         # print(f"Action: {self.action_to_function[action]}")
 
         done = self.is_solved()
-        time_out = self.time >= 40  # Limit to x moves
+        time_out = self.time >= 10  # Limit to this many moves
 
         state = np.array(list(self.cube.values())).flatten()
         
+        reward = 0
+
         if done:
-            reward = 1000
+            reward = (1500 / math.log(self.time + 1)) - 300 # Reward for solving the cube based on number of steps
             return state, reward, done or time_out, False, {}
-        else:
-            # Default reward based on improvement in Manhattan distance
-            reward = prev_state - self.manhattan_distance(self.cube)
-            # if time_out:
-            #     reward -= 100  # Penalty for exceeding the time limit
+        
+        if self.manhattan_distance(self.cube) > prev_state:
+            reward = (prev_state - self.manhattan_distance(self.cube)) * 0.6 - 2 # need to change this function to increase magnitude as ep_len_mean drops
+
+        elif self.manhattan_distance(self.cube) < prev_state:
+            reward = (prev_state - self.manhattan_distance(self.cube))
+
+        if time_out:
+            reward = -100  # Penalty for exceeding the time limit
 
         return state, reward, done or time_out, False, {}
 
@@ -135,7 +141,7 @@ def train_rubiks_cube_solver():
     model = PPO("MlpPolicy", env, verbose=1)
 
     # Train the agent
-    total_timesteps = 250000
+    total_timesteps = 2000000
     model.learn(total_timesteps=total_timesteps)
 
     # Save the trained model
