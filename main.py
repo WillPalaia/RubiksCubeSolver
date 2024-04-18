@@ -45,6 +45,7 @@ class RubiksCubeEnv(gym.Env):
         self.current_state = np.zeros((324,), dtype=np.uint8)  # Initial solved state
         self.action_to_function = [up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime]
         self.cube = self.initialize_cube()
+        self.shuffle_start = 20
 
     def initialize_cube(self):
         # Initialize the cube
@@ -61,7 +62,7 @@ class RubiksCubeEnv(gym.Env):
     def reset(self, seed=None):
         # print(f"Resetting...")
         self.cube = self.initialize_cube()
-        self.cube = scramble_cube(self.cube, 5)
+        self.cube = scramble_cube(self.cube, self.shuffle_start)
         state = np.array(list(self.cube.values())).flatten()
         self.current_state = state
         self.time = 0
@@ -84,7 +85,7 @@ class RubiksCubeEnv(gym.Env):
 
     def step(self, action):
         self.time += 1
-        
+         
         prev_state = self.manhattan_distance(self.cube)
 
         action = int(action)
@@ -92,24 +93,28 @@ class RubiksCubeEnv(gym.Env):
         # print(f"Action: {self.action_to_function[action]}")
 
         done = self.is_solved()
-        time_out = self.time >= 10  # Limit to this many moves
+        time_out = self.time >= 40  # Limit to this many moves
 
         state = np.array(list(self.cube.values())).flatten()
         
-        reward = 0
+        # reward = 0
+        reward = -1
 
         if done:
-            reward = (1500 / math.log(self.time + 1)) - 300 # Reward for solving the cube based on number of steps
+            reward = 0 # don't want to reward it AS much as we want it to not be punished
+            # reward = (1500 / math.log(self.time + 1)) - 300 # Reward for solving the cube based on number of steps
             return state, reward, done or time_out, False, {}
         
-        if self.manhattan_distance(self.cube) > prev_state:
-            reward = (prev_state - self.manhattan_distance(self.cube)) * 0.6 - 2 # need to change this function to increase magnitude as ep_len_mean drops
+        # if self.manhattan_distance(self.cube) > prev_state:
+            # don't need if statement because it will remember if it got punished in the last state
+        reward = self.manhattan_distance(self.cube) * -1 #no matter how many steps you give it to solve, it's always gonna wanna solve it as quick as possible
+            # reward = (prev_state - self.manhattan_distance(self.cube)) * 0.6 - 2 # need to change this function to increase magnitude as ep_len_mean drops
 
-        elif self.manhattan_distance(self.cube) < prev_state:
-            reward = (prev_state - self.manhattan_distance(self.cube))
+        # elif self.manhattan_distance(self.cube) < prev_state:
+        # reward = (prev_state - self.manhattan_distance(self.cube)) --> not necessary
 
-        if time_out:
-            reward = -100  # Penalty for exceeding the time limit
+        # if time_out: --> not necessary
+        #     reward = -100  # Penalty for exceeding the time limit
 
         return state, reward, done or time_out, False, {}
 
@@ -144,8 +149,15 @@ def train_rubiks_cube_solver():
     total_timesteps = 2000000
     model.learn(total_timesteps=total_timesteps)
 
+    env.shuffle_start = 10 #4/17
+    env.reset()
+
     # Save the trained model
     model.save("rubiks_cube_model-2")
+    # can change whatever, can increase shuffles, reset env, ...
+
+    model.learn(total_timesteps=total_timesteps * 2) # 4/17
+ 
 
     # Load the trained agent
     model.load("rubiks_cube_model-2", env=env)
