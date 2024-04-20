@@ -45,6 +45,9 @@ class RubiksCubeEnv(gym.Env):
         self.current_state = np.zeros((324,), dtype=np.uint8)  # Initial solved state
         self.action_to_function = [up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime]
         self.cube = self.initialize_cube()
+        self.totalsteps = 0
+        self.prev_numscrambles = 0
+        self.prev_totalsteps = 0
 
     def initialize_cube(self):
         # Initialize the cube
@@ -60,11 +63,15 @@ class RubiksCubeEnv(gym.Env):
 
     def reset(self, seed=None):
         # print(f"Resetting...")
+        numscrambles = min(1 + self.totalsteps // 30000, 20)
+        if numscrambles > self.prev_numscrambles:
+            print(f"Scrambling {numscrambles} times")
         self.cube = self.initialize_cube()
-        self.cube = scramble_cube(self.cube, 5)
+        self.cube = scramble_cube(self.cube, numscrambles)
         state = np.array(list(self.cube.values())).flatten()
         self.current_state = state
         self.time = 0
+        self.prev_numscrambles = numscrambles
         return self.current_state, {}
 
     def is_solved(self):
@@ -84,6 +91,7 @@ class RubiksCubeEnv(gym.Env):
 
     def step(self, action):
         self.time += 1
+        self.totalsteps += 1
         
         prev_state = self.manhattan_distance(self.cube)
 
@@ -92,24 +100,30 @@ class RubiksCubeEnv(gym.Env):
         # print(f"Action: {self.action_to_function[action]}")
 
         done = self.is_solved()
-        time_out = self.time >= 10  # Limit to this many moves
+        time_out = self.time >= min(5 + self.totalsteps // 30000, 30)  # Limit to this many moves
+        if min(5 + self.totalsteps // 30000, 30) > min(5 + self.prev_totalsteps // 30000, 30):
+            print(f"Allowed {min(5 + self.totalsteps // 30000, 30)} steps")
 
         state = np.array(list(self.cube.values())).flatten()
         
-        reward = 0
+        reward = -1 # changed from 0
+
+        self.prev_totalsteps = self.totalsteps
 
         if done:
-            reward = (1500 / math.log(self.time + 1)) - 300 # Reward for solving the cube based on number of steps
+            reward = 0
+            # reward = (1500 / math.log(self.time + 1)) - 300 # Reward for solving the cube based on number of steps
             return state, reward, done or time_out, False, {}
         
-        if self.manhattan_distance(self.cube) > prev_state:
-            reward = (prev_state - self.manhattan_distance(self.cube)) * 0.6 - 2 # need to change this function to increase magnitude as ep_len_mean drops
+        # if self.manhattan_distance(self.cube) > prev_state:
+        #     reward = (prev_state - self.manhattan_distance(self.cube)) * 0.6 - 2 # need to change this function to increase magnitude as ep_len_mean drops
 
-        elif self.manhattan_distance(self.cube) < prev_state:
-            reward = (prev_state - self.manhattan_distance(self.cube))
+        # elif self.manhattan_distance(self.cube) < prev_state:
+        #     reward = (prev_state - self.manhattan_distance(self.cube))
+        reward = self.manhattan_distance(self.cube) * -1
 
-        if time_out:
-            reward = -100  # Penalty for exceeding the time limit
+        # if time_out:
+        #     reward = -100  # Penalty for exceeding the time limit
 
         return state, reward, done or time_out, False, {}
 
@@ -141,11 +155,16 @@ def train_rubiks_cube_solver():
     model = PPO("MlpPolicy", env, verbose=1)
 
     # Train the agent
-    total_timesteps = 2000000
+    total_timesteps = 1000000
     model.learn(total_timesteps=total_timesteps)
+
+    # scramble_cube(env.cube, 10) # Why is this here?
+    # env.reset()
 
     # Save the trained model
     model.save("rubiks_cube_model-2")
+
+    # model.learn(total_timesteps=total_timesteps) # continue training the model
 
     # Load the trained agent
     model.load("rubiks_cube_model-2", env=env)
