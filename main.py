@@ -63,7 +63,8 @@ class RubiksCubeEnv(gym.Env):
 
     def reset(self, seed=None):
         # print(f"Resetting...")
-        numscrambles = min(1 + self.totalsteps // 30000, 20)
+        # numscrambles = min(1 + self.totalsteps // 30000, 20)
+        numscrambles = math.floor(min(1 + (self.totalsteps * math.e ** (-self.totalsteps/3000000)) / 40000, 20))
         if numscrambles > self.prev_numscrambles:
             print(f"Scrambling {numscrambles} times")
         self.cube = self.initialize_cube()
@@ -92,6 +93,7 @@ class RubiksCubeEnv(gym.Env):
     def step(self, action):
         self.time += 1
         self.totalsteps += 1
+        nummoves = math.floor(min(11 + (self.totalsteps * math.e ** (-self.totalsteps/3000000)) / 40000, 30))
         
         prev_state = self.manhattan_distance(self.cube)
 
@@ -100,18 +102,18 @@ class RubiksCubeEnv(gym.Env):
         # print(f"Action: {self.action_to_function[action]}")
 
         done = self.is_solved()
-        time_out = self.time >= min(5 + self.totalsteps // 30000, 30)  # Limit to this many moves
-        if min(5 + self.totalsteps // 30000, 30) > min(5 + self.prev_totalsteps // 30000, 30):
-            print(f"Allowed {min(5 + self.totalsteps // 30000, 30)} steps")
+        time_out = self.time >= nummoves  # Limit to this many moves
+        if nummoves > math.floor(min(11 + (self.prev_totalsteps * math.e ** (-self.prev_totalsteps/3000000)) / 40000, 30)):
+            print(f"Allowed {nummoves} steps")
 
         state = np.array(list(self.cube.values())).flatten()
         
-        reward = -1 # changed from 0
+        reward = -10 # changed from 0
 
         self.prev_totalsteps = self.totalsteps
 
         if done:
-            reward = 0
+            reward = 0 # maybe positive reward for solving the cube
             # reward = (1500 / math.log(self.time + 1)) - 300 # Reward for solving the cube based on number of steps
             return state, reward, done or time_out, False, {}
         
@@ -155,7 +157,7 @@ def train_rubiks_cube_solver():
     model = PPO("MlpPolicy", env, verbose=1)
 
     # Train the agent
-    total_timesteps = 1000000
+    total_timesteps = 2000000
     model.learn(total_timesteps=total_timesteps)
 
     # scramble_cube(env.cube, 10) # Why is this here?
