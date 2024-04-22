@@ -8,6 +8,6 @@ After downloading required packages, run `main.py`
 - PPO algorithm implementation
 - Solution generation using Manhattan distance heuristic
 
-###Packages
+## Packages
 - Gymnasium (OpenAI RL library): `pip install gymnasium`
 - Stable-baselines3 (PPO algorithm): `pip install stable-baselines3`
