@@ -38,7 +38,7 @@ def color_encoding(color):
         return np.array([0, 0, 0, 0, 0, 1], dtype=np.uint8)
 
 class RubiksCubeEnv(gym.Env):
-    def __init__(self):
+    def __init__(self, scramble=1, time_limit=10):
         self.action_space = gym.spaces.Discrete(12)  # Assuming 12 possible rotations
         self.observation_space = gym.spaces.MultiBinary(324)
         # self.observation_space = gym.spaces.MultiBinary(shape=(324,), dtype=np.uint8)  # 6 faces, 3x3 each
@@ -46,6 +46,10 @@ class RubiksCubeEnv(gym.Env):
         self.action_to_function = [up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime]
         self.cube = self.initialize_cube()
         self.totalsteps = 0
+
+        self.scrambles = scramble
+        self.time_limit = time_limit
+
         self.prev_numscrambles = 0
         self.prev_totalsteps = 0
 
@@ -64,15 +68,18 @@ class RubiksCubeEnv(gym.Env):
     def reset(self, seed=None):
         # print(f"Resetting...")
         # numscrambles = min(1 + self.totalsteps // 30000, 20)
-        numscrambles = math.floor(min(1 + (self.totalsteps * math.e ** (-self.totalsteps/3000000)) / 40000, 20))
-        if numscrambles > self.prev_numscrambles:
-            print(f"Scrambling {numscrambles} times")
+        #numscrambles = math.floor(min(1 + (self.totalsteps * math.e ** (-self.totalsteps/3000000)) / 40000, 20))
+        #if numscrambles > self.prev_numscrambles:
+        #    print(f"Scrambling {numscrambles} times")
+        numscrambles = self.scrambles
+
         self.cube = self.initialize_cube()
         self.cube = scramble_cube(self.cube, numscrambles)
         state = np.array(list(self.cube.values())).flatten()
         self.current_state = state
         self.time = 0
         self.prev_numscrambles = numscrambles
+
         return self.current_state, {}
 
     def is_solved(self):
@@ -102,9 +109,9 @@ class RubiksCubeEnv(gym.Env):
         # print(f"Action: {self.action_to_function[action]}")
 
         done = self.is_solved()
-        time_out = self.time >= nummoves  # Limit to this many moves
-        if nummoves > math.floor(min(11 + (self.prev_totalsteps * math.e ** (-self.prev_totalsteps/3000000)) / 40000, 30)):
-            print(f"Allowed {nummoves} steps")
+        time_out = self.time >= self.time_limit  # Limit to this many moves
+        #if nummoves > math.floor(min(11 + (self.prev_totalsteps * math.e ** (-self.prev_totalsteps/3000000)) / 40000, 30)):
+        #    print(f"Allowed {nummoves} steps")
 
         state = np.array(list(self.cube.values())).flatten()
         
@@ -157,15 +164,20 @@ def train_rubiks_cube_solver():
     # Create PPO agent
     model = PPO("MlpPolicy", env, verbose=1)
 
-    # Train the agent
-    total_timesteps = 2000000
-    model.learn(total_timesteps=total_timesteps)
+    for scrambles in range(1, 20):
+        print(f"training with {scrambles} scrambles, time limit: {scrambles ** 2}")
+        env.scrambles = scrambles
+        env.time_limit = scrambles ** 2
+        env.reset()
+        model.learn(total_timesteps=25000 + 5000 * scrambles)
+
+        model.save(f"rubiks_cube_model-{scrambles}")
 
     # scramble_cube(env.cube, 10) # Why is this here?
     # env.reset()
 
     # Save the trained model
-    model.save("rubiks_cube_model-2")
+    model.save("rubiks-cube-final")
     # can change whatever, can increase shuffles, reset env, ...
 
     # model.learn(total_timesteps=total_timesteps * 2) # 4/17
