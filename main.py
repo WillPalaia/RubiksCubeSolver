@@ -4,6 +4,10 @@ import gymnasium as gym
 import rubiks
 from rubiks import cube, scramble_cube, print_cube, moveit, onehotstate, up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime
 from stable_baselines3 import PPO
+import datetime
+
+date_time = datetime.datetime.now()
+date = date_time.strftime('%m%d%y')
 
 # Define colors and faces
 face_keys = ['F', 'R', 'B', 'L', 'U', 'D']
@@ -115,7 +119,7 @@ class RubiksCubeEnv(gym.Env):
 
         state = np.array(list(self.cube.values())).flatten()
         
-        reward = -10 # changed from 0
+        reward = -1 # changed from 0
 
         self.prev_totalsteps = self.totalsteps
 
@@ -129,7 +133,7 @@ class RubiksCubeEnv(gym.Env):
 
         # elif self.manhattan_distance(self.cube) < prev_state:
         #     reward = (prev_state - self.manhattan_distance(self.cube))
-        reward += self.manhattan_distance(self.cube) * -1
+        # reward += self.manhattan_distance(self.cube) * -1
 
         # max or min manhattan distance for each face might allow it to learn one face at a time
         # bigger NN
@@ -165,24 +169,24 @@ def train_rubiks_cube_solver():
     model = PPO("MlpPolicy", env, verbose=1)
 
     for scrambles in range(1, 20):
-        print(f"training with {scrambles} scrambles, time limit: {scrambles ** 2}")
         env.scrambles = scrambles
-        env.time_limit = scrambles ** 2
+        if scrambles == 1:
+            env.time_limit = 3
+        else:
+            env.time_limit = scrambles ** 2
+        print(f"training with {scrambles} scrambles, time limit: {env.time_limit}")
         env.reset()
-        model.learn(total_timesteps=25000 + 5000 * scrambles)
+        model.learn(total_timesteps=30000 + 20000 * scrambles) # change slope to 10k
 
-        model.save(f"rubiks_cube_model-{scrambles}")
+        model.save(f"model-{date}--{scrambles}s")
 
     # scramble_cube(env.cube, 10) # Why is this here?
     # env.reset()
 
     # Save the trained model
-    model.save("rubiks-cube-final")
+    model.save("rubiks-42424")
+
     # can change whatever, can increase shuffles, reset env, ...
-
-    # model.learn(total_timesteps=total_timesteps * 2) # 4/17
- 
-
     # model.learn(total_timesteps=total_timesteps) # continue training the model
 
     # Load the trained agent
