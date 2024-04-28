@@ -1,8 +1,9 @@
 import math
+from time import sleep
 import numpy as np
 import gymnasium as gym
 import rubiks
-from rubiks import cube, scramble_cube, print_cube, moveit, onehotstate, up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime
+from rubiks import cube, clear_terminal, scramble_cube, print_cube, moveit, onehotstate, up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime
 from stable_baselines3 import PPO
 import datetime
 
@@ -104,9 +105,9 @@ class RubiksCubeEnv(gym.Env):
     def step(self, action):
         self.time += 1
         self.totalsteps += 1
-        nummoves = math.floor(min(11 + (self.totalsteps * math.e ** (-self.totalsteps/3000000)) / 40000, 30))
+        # nummoves = math.floor(min(11 + (self.totalsteps * math.e ** (-self.totalsteps/3000000)) / 40000, 30))
         
-        prev_state = self.manhattan_distance(self.cube)
+        # prev_state = self.manhattan_distance(self.cube)
 
         action = int(action)
         self.action_to_function[action](self.cube) # retrieves action from action_to_function list, passing the current state as an argument
@@ -126,7 +127,7 @@ class RubiksCubeEnv(gym.Env):
         if done:
             reward = 0 # maybe positive reward for solving the cube
             # reward = (1500 / math.log(self.time + 1)) - 300 # Reward for solving the cube based on number of steps
-            return state, reward, done or time_out, False, {}
+            return state, reward, True, False, {}
         
         # if self.manhattan_distance(self.cube) > prev_state:
         #     reward = (prev_state - self.manhattan_distance(self.cube)) * 0.6 - 2 # need to change this function to increase magnitude as ep_len_mean drops
@@ -141,12 +142,11 @@ class RubiksCubeEnv(gym.Env):
         # if time_out:
         #     reward = -100  # Penalty for exceeding the time limit
 
-        return state, reward, done or time_out, False, {}
+        return state, reward, time_out, False, {}
 
-    def render(self, mode='console'):
-        if mode != 'console':
-            raise NotImplementedError("Only 'console' mode is currently implemented for rendering.")
-        # Call the print_cube function with the current cube state
+    def render(self, mode='human'):
+        if mode != 'human':
+            raise NotImplementedError("Only 'human' mode is currently implemented for rendering.")
         print_cube(self.cube)
     
     def manhattan_distance(self, solved_state):
@@ -168,51 +168,61 @@ def train_rubiks_cube_solver():
     # Create PPO agent
     model = PPO("MlpPolicy", env, verbose=1)
 
-    for scrambles in range(1, 20):
-        env.scrambles = scrambles
-        if scrambles == 1:
-            env.time_limit = 3
-        else:
+    training = False
+    if training:
+        for scrambles in range(1, 5):
+            env.scrambles = scrambles
             env.time_limit = scrambles ** 2
-        print(f"training with {scrambles} scrambles, time limit: {env.time_limit}")
-        env.reset()
-        model.learn(total_timesteps=30000 + 20000 * scrambles) # change slope to 10k
+            print(f"training with {scrambles} scrambles, time limit: {env.time_limit}")
+            env.reset()
+            model.learn(total_timesteps=30000 + 20000 * scrambles)
+            model.save(f"model-{date}--{scrambles}s")
 
-        model.save(f"model-{date}--{scrambles}s")
+        # Save the trained model
+        model.save(f"model-{date}--complete")
 
-    # scramble_cube(env.cube, 10) # Why is this here?
-    # env.reset()
-
-    # Save the trained model
-    model.save("rubiks-42424")
-
-    # can change whatever, can increase shuffles, reset env, ...
-    # model.learn(total_timesteps=total_timesteps) # continue training the model
+        # can change whatever, can increase shuffles, reset env, ...
+        # model.learn(total_timesteps=total_timesteps) # continue training the model
 
     # Load the trained agent
-    model.load("rubiks_cube_model-2", env=env)
+    model.load(f"model-{date}--2s", env=env)
 
     # Enjoy trained agent
-    vec_env = model.get_env()   
+    vec_env = model.get_env()
+    print("Solved state ")
+    env.render()
+    sleep(2)
+
+    env.scrambles = 2
+    env.time_limit = 4
     obs = vec_env.reset()
-    for i in range(1000):
-        action = model.predict(obs, deterministic=True)
-        obs, rewards, dones, info = vec_env.step(action)
-        env.render("human")
-        # print_cube(env.cube)
+    print("Scrambled state")
+    env.render()
+    sleep(2)
+    
+    for i in range(100):
+        action_array, _ = model.predict(obs, deterministic=True)
+        action_index = action_array[0][0] if isinstance(action_array[0], list) else action_array[0]
+        obs, rewards, done, info = vec_env.step([action_index])
+        action_function = env.action_to_function[action_index]
 
-# env = RubiksCubeEnv()
-# solved_state = env.initialize_cube()
+        # Apply the action to the environment
+        print(f"Action: {action_function.__name__}")
+        moveit(env.cube, action_function)
 
-# print(f"Is solved? {env.is_solved()}")
-# up(env.cube)
-# print(f"Is solved? {env.is_solved()}")
-# left_prime(env.cube)
-# print(f"Is solved? {env.is_solved()}")
-# print_cube(env.cube)
-# moveit(env.cube, left)
+        # Step through the environment using the selected action
+        env.render()
 
-# print(RubiksCubeEnv().manhattan_distance(env.cube))
+        sleep(0.4)
+
+        if done:
+            print(f"Timeout at {i+1} moves.")
+            break
+
+        if env.is_solved():
+            print(f"Solved in {i+1} moves!")
+            break
+
 
 if __name__ == "__main__":
     train_rubiks_cube_solver()

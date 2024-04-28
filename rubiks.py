@@ -313,7 +313,7 @@ def scramble_cube(cube, num_moves):
     movelist = []
     timestep = 0.5
 
-    cubeinit(cube)
+    # cubeinit(cube)
 
     for _ in range(num_moves):
         # clear_terminal()
@@ -329,7 +329,7 @@ def scramble_cube(cube, num_moves):
     # print("Scramble:", ', '.join(movelist))
 
     # Invert and reverse the move list
-    inverted_movelist = [invert_move(move) for move in reversed(movelist)]
+    # inverted_movelist = [invert_move(move) for move in reversed(movelist)]
     # Create a string representation of the reversed and inverted move list
     # reversed_moves_str = ', '.join(inverted_movelist)
     # print("Undo:", reversed_moves_str)
@@ -351,8 +351,8 @@ def moveit(cube, action, times=1):
 
 def cubeinit(cube):
     # clear_terminal()
-    # print_cube(cube)
-    # sleep(1)
+    print_cube(cube)
+    sleep(1)
     None
 
 def onehotstate(cube):
