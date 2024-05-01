@@ -308,7 +308,7 @@ move_functions = {
     'D_prime': down_prime
 }
 
-def scramble_cube(cube, num_moves):
+def scramble_cube(cube, num_moves, printscramble=True):
     moves = list(move_functions.keys())
     movelist = []
     timestep = 0.5
@@ -326,7 +326,8 @@ def scramble_cube(cube, num_moves):
         # sleep(timestep)
 
     # print()
-    # print("Scramble:", ', '.join(movelist))
+    if printscramble:
+        print("Scramble:", ', '.join(movelist))
 
     # Invert and reverse the move list
     # inverted_movelist = [invert_move(move) for move in reversed(movelist)]

@@ -5,6 +5,7 @@ import gymnasium as gym
 import rubiks
 from rubiks import cube, clear_terminal, scramble_cube, print_cube, moveit, onehotstate, up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime
 from stable_baselines3 import PPO
+import torch as th
 import datetime
 
 date_time = datetime.datetime.now()
@@ -43,7 +44,7 @@ def color_encoding(color):
         return np.array([0, 0, 0, 0, 0, 1], dtype=np.uint8)
 
 class RubiksCubeEnv(gym.Env):
-    def __init__(self, scramble=1, time_limit=10):
+    def __init__(self, scramble=0, time_limit=10):
         self.action_space = gym.spaces.Discrete(12)  # Assuming 12 possible rotations
         self.observation_space = gym.spaces.MultiBinary(324)
         # self.observation_space = gym.spaces.MultiBinary(shape=(324,), dtype=np.uint8)  # 6 faces, 3x3 each
@@ -79,7 +80,7 @@ class RubiksCubeEnv(gym.Env):
         numscrambles = self.scrambles
 
         self.cube = self.initialize_cube()
-        self.cube = scramble_cube(self.cube, numscrambles)
+        self.cube = scramble_cube(self.cube, numscrambles, False)
         state = np.array(list(self.cube.values())).flatten()
         self.current_state = state
         self.time = 0
@@ -107,7 +108,7 @@ class RubiksCubeEnv(gym.Env):
         self.totalsteps += 1
         # nummoves = math.floor(min(11 + (self.totalsteps * math.e ** (-self.totalsteps/3000000)) / 40000, 30))
         
-        # prev_state = self.manhattan_distance(self.cube)
+        prev_state = self.manhattan_distance(self.cube)
 
         action = int(action)
         self.action_to_function[action](self.cube) # retrieves action from action_to_function list, passing the current state as an argument
@@ -134,7 +135,7 @@ class RubiksCubeEnv(gym.Env):
 
         # elif self.manhattan_distance(self.cube) < prev_state:
         #     reward = (prev_state - self.manhattan_distance(self.cube))
-        # reward += self.manhattan_distance(self.cube) * -1
+        reward += self.manhattan_distance(self.cube) * -1
 
         # max or min manhattan distance for each face might allow it to learn one face at a time
         # bigger NN
@@ -165,36 +166,44 @@ def train_rubiks_cube_solver():
     env = RubiksCubeEnv()
     env.reset()
 
+    # Custom Neural Network Architecture (more complex)
+    policy_kwargs = dict(activation_fn=th.nn.ReLU,
+                     net_arch=dict(pi=[128, 64, 64], vf=[128, 64, 64]))
+
     # Create PPO agent
-    model = PPO("MlpPolicy", env, verbose=1)
+    model = PPO("MlpPolicy", env, verbose=1, policy_kwargs=policy_kwargs)
+    print(model.policy)
 
     training = False
     if training:
-        for scrambles in range(1, 5):
+        for scrambles in range(1, 6):
             env.scrambles = scrambles
             env.time_limit = scrambles ** 2
             print(f"training with {scrambles} scrambles, time limit: {env.time_limit}")
             env.reset()
-            model.learn(total_timesteps=30000 + 20000 * scrambles)
-            model.save(f"model-{date}--{scrambles}s")
+            model.learn(total_timesteps=15000 + 5000 * scrambles)
+
+            model.save("models/"f"model-{date}-manhattan-{scrambles}s-complex")
 
         # Save the trained model
-        model.save(f"model-{date}--complete")
+        model.save("models/" + f"model-{date}-manhattan-complete-complex")
 
         # can change whatever, can increase shuffles, reset env, ...
         # model.learn(total_timesteps=total_timesteps) # continue training the model
 
-    # Load the trained agent
-    model.load(f"model-{date}--2s", env=env)
+    # Load a trained agent to run it
+    model.load(f"model-{date}-manhattan-4s-complex", env=env)
 
     # Enjoy trained agent
+    clear_terminal()
     vec_env = model.get_env()
     print("Solved state ")
     env.render()
     sleep(2)
+    clear_terminal()
 
-    env.scrambles = 2
-    env.time_limit = 4
+    env.scrambles = 3
+    env.time_limit = 9
     obs = vec_env.reset()
     print("Scrambled state")
     env.render()
@@ -206,6 +215,7 @@ def train_rubiks_cube_solver():
         obs, rewards, done, info = vec_env.step([action_index])
         action_function = env.action_to_function[action_index]
 
+        clear_terminal()
         # Apply the action to the environment
         print(f"Action: {action_function.__name__}")
         moveit(env.cube, action_function)
@@ -213,14 +223,14 @@ def train_rubiks_cube_solver():
         # Step through the environment using the selected action
         env.render()
 
-        sleep(0.4)
+        sleep(0.6)
 
         if done:
-            print(f"Timeout at {i+1} moves.")
+            print(f"Agent timed out at {i+1} moves.")
             break
 
         if env.is_solved():
-            print(f"Solved in {i+1} moves!")
+            print(f"Rubik's Cube solved in {i+1} moves!")
             break
 
 
