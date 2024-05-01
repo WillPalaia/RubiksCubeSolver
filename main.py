@@ -192,7 +192,7 @@ def train_rubiks_cube_solver():
         # model.learn(total_timesteps=total_timesteps) # continue training the model
 
     # Load a trained agent to run it
-    model.load(f"model-{date}-manhattan-4s-complex", env=env)
+    model.load("models/" + f"model-{date}-manhattan-4s-complex", env=env)
 
     # Enjoy trained agent
     clear_terminal()
