@@ -58,6 +58,8 @@ class RubiksCubeEnv(gym.Env):
 
         self.prev_numscrambles = 0
         self.prev_totalsteps = 0
+        self.solved = 0
+        self.timedout = 0
 
     def initialize_cube(self):
         # Initialize the cube
@@ -107,7 +109,7 @@ class RubiksCubeEnv(gym.Env):
         self.time += 1
         self.totalsteps += 1
         # nummoves = math.floor(min(11 + (self.totalsteps * math.e ** (-self.totalsteps/3000000)) / 40000, 30))
-        
+        reward = 0
         prev_state = self.manhattan_distance(self.cube)
 
         action = int(action)
@@ -121,29 +123,31 @@ class RubiksCubeEnv(gym.Env):
 
         state = np.array(list(self.cube.values())).flatten()
         
-        reward = -1 # changed from 0
+        # reward = -1 # changed from 0
+
         #print(f"State: {self.cube.values()}")
         # print(f"Action: {action}")
 
         self.prev_totalsteps = self.totalsteps
 
-        print_cube(self.cube)
+        # print_cube(self.cube)
 
         if done:
             reward = 0 # maybe positive reward for solving the cube
             # reward = (1500 / math.log(self.time + 1)) - 300 # Reward for solving the cube based on number of steps
-            print("Cube solved")
+            self.solved += 1
             return state, reward, True, False, {}
         
         # if self.manhattan_distance(self.cube) > prev_state:
         #     reward = (prev_state - self.manhattan_distance(self.cube)) * 0.6 - 2 # need to change this function to increase magnitude as ep_len_mean drops
 
-        if time_out:
-            print("Cube not solved")
+        # if time_out:
+            # print("Cube not solved")
 
         # elif self.manhattan_distance(self.cube) < prev_state:
         #     reward = (prev_state - self.manhattan_distance(self.cube))
-        reward += self.manhattan_distance(self.cube) * -1
+        reward -= self.manhattan_distance(self.cube) / 26
+        self.timedout += 1
         # max or min manhattan distance for each face might allow it to learn one face at a time
         # bigger NN
 
@@ -183,12 +187,12 @@ def train_rubiks_cube_solver():
 
     training = False
     if training:
-        for scrambles in range(1, 3):
+        for scrambles in range(1, 12):
             env.scrambles = scrambles
             env.time_limit = scrambles ** 2
             print(f"training with {scrambles} scrambles, time limit: {env.time_limit}")
             env.reset()
-            model.learn(total_timesteps=15000 + 5000 * scrambles)
+            model.learn(total_timesteps=30000 + 10000 * scrambles)
 
             model.save("models/"f"model-{date}-manhattan-{scrambles}s-complex")
 
@@ -208,7 +212,7 @@ def train_rubiks_cube_solver():
     sleep(2)
     clear_terminal()
 
-    env.scrambles = 2
+    env.scrambles = 5
     env.time_limit = env.scrambles ** 2
     obs, _ = env.reset()
     print("Scrambled state")
@@ -224,12 +228,12 @@ def train_rubiks_cube_solver():
         clear_terminal()
         # Apply the action to the environment
         print(f"Action: {action_function.__name__}")
-        moveit(env.cube, action_function)
+        # moveit(env.cube, action_function)
 
         # Step through the environment using the selected action
         env.render()
 
-        sleep(0.6)
+        sleep(1)
 
         if done:
             print(f"Agent timed out at {i+1} moves.")

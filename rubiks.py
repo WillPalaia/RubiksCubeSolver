@@ -366,8 +366,8 @@ def onehotstate(cube):
 # cubeinit(cube)
 print_cube(cube)
 
-moveit(cube, down)
-moveit(cube, down_prime)
+# moveit(cube, down)
+# moveit(cube, down_prime)
 # moveit(cube, up)
 # moveit(cube, up_prime)
 # moveit(cube, front)
@@ -380,5 +380,5 @@ moveit(cube, down_prime)
 # moveit(cube, left_prime)
 
 # scramble_cube(cube, 5)
-# print(cube)
+# print_cube(cube)
 # print(onehotstate(cube))
