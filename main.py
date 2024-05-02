@@ -122,21 +122,28 @@ class RubiksCubeEnv(gym.Env):
         state = np.array(list(self.cube.values())).flatten()
         
         reward = -1 # changed from 0
+        #print(f"State: {self.cube.values()}")
+        # print(f"Action: {action}")
 
         self.prev_totalsteps = self.totalsteps
+
+        print_cube(self.cube)
 
         if done:
             reward = 0 # maybe positive reward for solving the cube
             # reward = (1500 / math.log(self.time + 1)) - 300 # Reward for solving the cube based on number of steps
+            print("Cube solved")
             return state, reward, True, False, {}
         
         # if self.manhattan_distance(self.cube) > prev_state:
         #     reward = (prev_state - self.manhattan_distance(self.cube)) * 0.6 - 2 # need to change this function to increase magnitude as ep_len_mean drops
 
+        if time_out:
+            print("Cube not solved")
+
         # elif self.manhattan_distance(self.cube) < prev_state:
         #     reward = (prev_state - self.manhattan_distance(self.cube))
         reward += self.manhattan_distance(self.cube) * -1
-
         # max or min manhattan distance for each face might allow it to learn one face at a time
         # bigger NN
 
@@ -176,7 +183,7 @@ def train_rubiks_cube_solver():
 
     training = False
     if training:
-        for scrambles in range(1, 6):
+        for scrambles in range(1, 3):
             env.scrambles = scrambles
             env.time_limit = scrambles ** 2
             print(f"training with {scrambles} scrambles, time limit: {env.time_limit}")
@@ -192,27 +199,26 @@ def train_rubiks_cube_solver():
         # model.learn(total_timesteps=total_timesteps) # continue training the model
 
     # Load a trained agent to run it
-    model.load("models/" + f"model-{date}-manhattan-4s-complex", env=env)
+    reloaded_model = PPO.load("models/" + f"model-{date}-manhattan-complete-complex")
 
     # Enjoy trained agent
     clear_terminal()
-    vec_env = model.get_env()
     print("Solved state ")
     env.render()
     sleep(2)
     clear_terminal()
 
-    env.scrambles = 3
-    env.time_limit = 9
-    obs = vec_env.reset()
+    env.scrambles = 2
+    env.time_limit = env.scrambles ** 2
+    obs, _ = env.reset()
     print("Scrambled state")
     env.render()
     sleep(2)
     
     for i in range(100):
-        action_array, _ = model.predict(obs, deterministic=True)
-        action_index = action_array[0][0] if isinstance(action_array[0], list) else action_array[0]
-        obs, rewards, done, info = vec_env.step([action_index])
+        action_index, _ = reloaded_model.predict(obs)
+        print(f"Action array: {action_index}")
+        obs, rewards, done, _, info = env.step(action_index)
         action_function = env.action_to_function[action_index]
 
         clear_terminal()

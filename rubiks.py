@@ -364,10 +364,10 @@ def onehotstate(cube):
 
 # print(cube)
 # cubeinit(cube)
-# print_cube(cube)
+print_cube(cube)
 
-# moveit(cube, down)
-# moveit(cube, down_prime)
+moveit(cube, down)
+moveit(cube, down_prime)
 # moveit(cube, up)
 # moveit(cube, up_prime)
 # moveit(cube, front)
