@@ -146,7 +146,10 @@ class RubiksCubeEnv(gym.Env):
 
         # elif self.manhattan_distance(self.cube) < prev_state:
         #     reward = (prev_state - self.manhattan_distance(self.cube))
-        reward -= self.manhattan_distance(self.cube) / 26
+
+        # reward -= abs(prev_state - self.manhattan_distance(self.cube)) / 12 # max manhattan distance is 26
+        reward -= 1
+        
         self.timedout += 1
         # max or min manhattan distance for each face might allow it to learn one face at a time
         # bigger NN
@@ -185,64 +188,59 @@ def train_rubiks_cube_solver():
     model = PPO("MlpPolicy", env, verbose=1, policy_kwargs=policy_kwargs)
     print(model.policy)
 
-    training = False
+    training = True
     if training:
-        for scrambles in range(1, 12):
+        for scrambles in range(1, 21):
             env.scrambles = scrambles
             env.time_limit = scrambles ** 2
             print(f"training with {scrambles} scrambles, time limit: {env.time_limit}")
             env.reset()
-            model.learn(total_timesteps=30000 + 10000 * scrambles)
+            model.learn(total_timesteps=30000 + 20000 * scrambles)
 
-            model.save("models/"f"model-{date}-manhattan-{scrambles}s-complex")
+            model.save("models/"f"model-{date}--{scrambles}s")
 
         # Save the trained model
-        model.save("models/" + f"model-{date}-manhattan-complete-complex")
+        model.save("models/" + f"model-{date}-complete")
 
         # can change whatever, can increase shuffles, reset env, ...
         # model.learn(total_timesteps=total_timesteps) # continue training the model
 
-    # Load a trained agent to run it
-    reloaded_model = PPO.load("models/" + f"model-{date}-manhattan-complete-complex")
+    testing = False
+    if testing:
+        # Load a trained agent to run it
+        reloaded_model = PPO.load("models/" + f"model-{date}-complete")
 
-    # Enjoy trained agent
-    clear_terminal()
-    print("Solved state ")
-    env.render()
-    sleep(2)
-    clear_terminal()
-
-    env.scrambles = 5
-    env.time_limit = env.scrambles ** 2
-    obs, _ = env.reset()
-    print("Scrambled state")
-    env.render()
-    sleep(2)
-    
-    for i in range(100):
-        action_index, _ = reloaded_model.predict(obs)
-        print(f"Action array: {action_index}")
-        obs, rewards, done, _, info = env.step(action_index)
-        action_function = env.action_to_function[action_index]
-
+        # Enjoy trained agent
+        env.scrambles = 5
+        env.time_limit = env.scrambles ** 2
+        obs, _ = env.reset()
         clear_terminal()
-        # Apply the action to the environment
-        print(f"Action: {action_function.__name__}")
-        # moveit(env.cube, action_function)
-
-        # Step through the environment using the selected action
+        print("Scrambled state")
         env.render()
+        sleep(2)
+        
+        for i in range(100):
+            action_index, _ = reloaded_model.predict(obs)
+            print(f"Action array: {action_index}")
+            obs, rewards, done, _, info = env.step(action_index)
+            action_function = env.action_to_function[action_index]
 
-        sleep(1)
+            clear_terminal()
+            # Apply the action to the environment
+            print(f"Action: {action_function.__name__}")
+            # moveit(env.cube, action_function)
 
-        if done:
-            print(f"Agent timed out at {i+1} moves.")
-            break
+            # Step through the environment using the selected action
+            env.render()
 
-        if env.is_solved():
-            print(f"Rubik's Cube solved in {i+1} moves!")
-            break
+            sleep(1)
 
+            if done:
+                if env.is_solved():
+                    print(f"Rubik's Cube solved in {i+1} moves!")
+                else:
+                    print(f"Agent timed out after {i+1} moves.")
+                break
 
 if __name__ == "__main__":
     train_rubiks_cube_solver()
