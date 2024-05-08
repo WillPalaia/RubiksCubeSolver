@@ -188,14 +188,14 @@ def train_rubiks_cube_solver():
     model = PPO("MlpPolicy", env, verbose=1, policy_kwargs=policy_kwargs)
     print(model.policy)
 
-    training = True
+    training = False
     if training:
-        for scrambles in range(1, 21):
+        for scrambles in range(1, 6):
             env.scrambles = scrambles
             env.time_limit = scrambles ** 2
             print(f"training with {scrambles} scrambles, time limit: {env.time_limit}")
             env.reset()
-            model.learn(total_timesteps=30000 + 20000 * scrambles)
+            model.learn(total_timesteps=20000 + 20000 * scrambles)
 
             model.save("models/"f"model-{date}--{scrambles}s")
 
@@ -205,14 +205,14 @@ def train_rubiks_cube_solver():
         # can change whatever, can increase shuffles, reset env, ...
         # model.learn(total_timesteps=total_timesteps) # continue training the model
 
-    testing = False
+    testing = True
     if testing:
         # Load a trained agent to run it
         reloaded_model = PPO.load("models/" + f"model-{date}-complete")
 
         # Enjoy trained agent
         env.scrambles = 5
-        env.time_limit = env.scrambles ** 2
+        env.time_limit = 10
         obs, _ = env.reset()
         clear_terminal()
         print("Scrambled state")
@@ -233,7 +233,7 @@ def train_rubiks_cube_solver():
             # Step through the environment using the selected action
             env.render()
 
-            sleep(1)
+            sleep(0.5)
 
             if done:
                 if env.is_solved():
