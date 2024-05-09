@@ -47,7 +47,6 @@ class RubiksCubeEnv(gym.Env):
     def __init__(self, scramble=0, time_limit=10):
         self.action_space = gym.spaces.Discrete(12)  # Assuming 12 possible rotations
         self.observation_space = gym.spaces.MultiBinary(324)
-        # self.observation_space = gym.spaces.MultiBinary(shape=(324,), dtype=np.uint8)  # 6 faces, 3x3 each
         self.current_state = np.zeros((324,), dtype=np.uint8)  # Initial solved state
         self.action_to_function = [up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime]
         self.cube = self.initialize_cube()
@@ -74,11 +73,6 @@ class RubiksCubeEnv(gym.Env):
         return cube
 
     def reset(self, seed=None):
-        # print(f"Resetting...")
-        # numscrambles = min(1 + self.totalsteps // 30000, 20)
-        #numscrambles = math.floor(min(1 + (self.totalsteps * math.e ** (-self.totalsteps/3000000)) / 40000, 20))
-        #if numscrambles > self.prev_numscrambles:
-        #    print(f"Scrambling {numscrambles} times")
         numscrambles = self.scrambles
 
         self.cube = self.initialize_cube()
@@ -110,27 +104,20 @@ class RubiksCubeEnv(gym.Env):
         self.totalsteps += 1
         # nummoves = math.floor(min(11 + (self.totalsteps * math.e ** (-self.totalsteps/3000000)) / 40000, 30))
         reward = 0
-        prev_state = self.manhattan_distance(self.cube)
+        # prev_state = self.manhattan_distance(self.cube)
 
         action = int(action)
         self.action_to_function[action](self.cube) # retrieves action from action_to_function list, passing the current state as an argument
-        # print(f"Action: {self.action_to_function[action]}")
-
+        
         done = self.is_solved()
         time_out = self.time >= self.time_limit  # Limit to this many moves
+        
         #if nummoves > math.floor(min(11 + (self.prev_totalsteps * math.e ** (-self.prev_totalsteps/3000000)) / 40000, 30)):
         #    print(f"Allowed {nummoves} steps")
 
         state = np.array(list(self.cube.values())).flatten()
         
-        # reward = -1 # changed from 0
-
-        #print(f"State: {self.cube.values()}")
-        # print(f"Action: {action}")
-
         self.prev_totalsteps = self.totalsteps
-
-        # print_cube(self.cube)
 
         if done:
             reward = 0 # maybe positive reward for solving the cube
@@ -202,45 +189,46 @@ def train_rubiks_cube_solver():
         # Save the trained model
         model.save("models/" + f"model-{date}-complete")
 
-        # can change whatever, can increase shuffles, reset env, ...
-        # model.learn(total_timesteps=total_timesteps) # continue training the model
-
     testing = True
     if testing:
-        # Load a trained agent to run it
-        reloaded_model = PPO.load("models/" + f"model-{date}-complete")
+        stats = []
+        for _ in range(1, 11):
+            # Load a trained agent to run it
+            reloaded_model = PPO.load("models/" + f"model-{date}-complete")
 
-        # Enjoy trained agent
-        env.scrambles = 5
-        env.time_limit = 10
-        obs, _ = env.reset()
-        clear_terminal()
-        print("Scrambled state")
-        env.render()
-        sleep(2)
-        
-        for i in range(100):
-            action_index, _ = reloaded_model.predict(obs)
-            print(f"Action array: {action_index}")
-            obs, rewards, done, _, info = env.step(action_index)
-            action_function = env.action_to_function[action_index]
-
+            # Enjoy trained agent
+            env.scrambles = 5
+            env.time_limit = 10
+            obs, _ = env.reset()
             clear_terminal()
-            # Apply the action to the environment
-            print(f"Action: {action_function.__name__}")
-            # moveit(env.cube, action_function)
-
-            # Step through the environment using the selected action
+            print("Scrambled cube")
             env.render()
+            sleep(0.1)
+            
+            for i in range(100):
+                action_index, _ = reloaded_model.predict(obs)
+                obs, rewards, done, _, info = env.step(action_index)
+                action_function = env.action_to_function[action_index]
 
-            sleep(0.5)
+                clear_terminal()
+                # Apply the action to the environment
+                print(action_function.__name__.capitalize().replace("_", " "))
 
-            if done:
-                if env.is_solved():
-                    print(f"Rubik's Cube solved in {i+1} moves!")
-                else:
-                    print(f"Agent timed out after {i+1} moves.")
-                break
+                # Step through the environment using the selected action
+                env.render()
+
+                sleep(0.1)
+
+                if done:
+                    if env.is_solved():
+                        print(f"Rubik's Cube solved in {i+1} moves!")
+                        stats.append("1")
+                    else:
+                        print(f"Agent timed out after {i+1} moves.")
+                        stats.append("0")
+                    sleep(0.2)
+                    break
+        print(f"Solves: {stats.count('1')}/{len(stats)}")
 
 if __name__ == "__main__":
     train_rubiks_cube_solver()
