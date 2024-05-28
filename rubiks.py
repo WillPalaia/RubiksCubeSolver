@@ -391,5 +391,5 @@ print_cube(cube)
 # moveit(cube, left_prime)
 
 scramble_cube(cube, 5)
-print_cube(cube)
+# print_cube(cube)
 # print(onehotstate(cube))
