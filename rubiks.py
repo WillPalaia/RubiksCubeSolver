@@ -11,14 +11,24 @@ colors = ['White', 'Red', 'Yellow', 'Orange', 'Blue', 'Green']
 # Initialize the cube
 # cube = {face: [[colors[i] for _ in range(3)] for _ in range(3)] for i, face in enumerate(face_keys)}
 # change cube to nparray and fix all functions
+# cube = {
+#     'F': np.array([[[1, 0, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # White
+#     'R': np.array([[[0, 1, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Red
+#     'B': np.array([[[0, 0, 1, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Yellow
+#     'L': np.array([[[0, 0, 0, 1, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Orange
+#     'U': np.array([[[0, 0, 0, 0, 1, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Blue
+#     'D': np.array([[[0, 0, 0, 0, 0, 1] for _ in range(3)] for _ in range(3)], dtype=np.uint8)  # Green
+# }
+
 cube = {
-    'F': np.array([[[1, 0, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # White
-    'R': np.array([[[0, 1, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Red
-    'B': np.array([[[0, 0, 1, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Yellow
-    'L': np.array([[[0, 0, 0, 1, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Orange
-    'U': np.array([[[0, 0, 0, 0, 1, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Blue
-    'D': np.array([[[0, 0, 0, 0, 0, 1] for _ in range(3)] for _ in range(3)], dtype=np.uint8)  # Green
+    'F': np.array([[0, 0, 0] for _ in range(3)], dtype=np.uint8),
+    'R': np.array([[1, 1, 1] for _ in range(3)], dtype=np.uint8),
+    'B': np.array([[2, 2, 2] for _ in range(3)], dtype=np.uint8),
+    'L': np.array([[3, 3, 3] for _ in range(3)], dtype=np.uint8),
+    'U': np.array([[4, 4, 4] for _ in range(3)], dtype=np.uint8),
+    'D': np.array([[5, 5, 5] for _ in range(3)], dtype=np.uint8)
 }
+
 
 def clear_terminal():
     os_name = platform.system()
@@ -245,53 +255,47 @@ color_codes = {
 
 reset_code = '\033[0m'
 
+''' PRINT CUBE FUNCTION USING COMPACT REPRESENTATION'''
 def print_cube(cube):
-    # Map one-hot indices to color names for printing
     colors = ['White', 'Red', 'Yellow', 'Orange', 'Blue', 'Green']
     color_codes = {'White': '\033[97m', 'Yellow': '\033[93m', 'Red': '\033[91m', 'Green': '\033[92m', 'Blue': '\033[94m', 'Orange': '\033[38;2;255;165;0m'}
     reset_code = '\033[0m'
 
-    # Helper function to find the color from one-hot encoding
-    def get_color(one_hot_vector):
-        index = np.argmax(one_hot_vector)
-        return colors[index]
-
-    # Helper function to print a single row of three faces horizontally
     def print_row(face1, face2, face3, row):
         for face in [face1, face2, face3]:
-            for color_vector in cube[face][row]:
-                color = get_color(color_vector)
-                print(f"{color_codes[color]}■{reset_code}", end=" ")
+            for color in cube[face][row]:
+                color_name = colors[color]
+                print(f"{color_codes[color_name]}■{reset_code}", end=" ")
             print(" ", end="")  # Space between faces
         print()  # New line after each row
 
     # Print the Up face (U) alone
     for row in range(3):
         print("       ", end="")
-        for color_vector in cube['U'][row]:
-            color = get_color(color_vector)
-            print(f"{color_codes[color]}■{reset_code}", end=" ")
-        print("     ")  # New lines and spaces for alignment
+        for color in cube['U'][row]:
+            color_name = colors[color]
+            print(f"{color_codes[color_name]}■{reset_code}", end=" ")
+        print()  # New lines and spaces for alignment
 
-    # Print Left (L), Front (F), Right (R), and Back (B) faces
+    # Print Left (L), Front (F), and Right (R) faces
     for row in range(3):
         print_row('L', 'F', 'R', row)
     
     # Print the Down face (D) alone
     for row in range(3):
         print("       ", end="")
-        for color_vector in cube['D'][row]:
-            color = get_color(color_vector)
-            print(f"{color_codes[color]}■{reset_code}", end=" ")
-        print("     ")  # New lines and spaces for alignment
+        for color in cube['D'][row]:
+            color_name = colors[color]
+            print(f"{color_codes[color_name]}■{reset_code}", end=" ")
+        print()  # New lines and spaces for alignment
 
     # Print the Back face (B) alone for completeness
-    for row in cube['B']:
+    for row in range(3):
         print("       ", end="")  # Alignment for the Back face
-        for color_vector in row:
-            color = get_color(color_vector)
-            print(f"{color_codes[color]}■{reset_code}", end=" ")
-        print()  # New line after each row
+        for color in cube['B'][row]:
+            color_name = colors[color]
+            print(f"{color_codes[color_name]}■{reset_code}", end=" ")
+        print()  # New line after each row      
     
 move_functions = {
     'F': front,
@@ -356,9 +360,20 @@ def cubeinit(cube):
     sleep(1)
     None
 
-def onehotstate(cube):
-    concatenated_array = np.concatenate([cube[face].flatten() for face in ['U', 'D', 'F', 'B', 'L', 'R']])
-    return concatenated_array
+# def onehotstate(cube):
+#     concatenated_array = np.concatenate([cube[face].flatten() for face in ['U', 'D', 'F', 'B', 'L', 'R']])
+#     return concatenated_array
+
+def to_one_hot(cube):
+    one_hot_cube = {}
+    for face, grid in cube.items():
+        one_hot_face = np.zeros((3, 3, 6), dtype=np.uint8)
+        for i in range(3):
+            for j in range(3):
+                color = grid[i, j]
+                one_hot_face[i, j, color] = 1
+        one_hot_cube[face] = one_hot_face
+    return one_hot_cube
 
 ''' ACTIONS BELOW '''
 
