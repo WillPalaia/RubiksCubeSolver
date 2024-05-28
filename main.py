@@ -3,10 +3,11 @@ from time import sleep
 import numpy as np
 import gymnasium as gym
 import rubiks
-from rubiks import cube, clear_terminal, scramble_cube, print_cube, moveit, onehotstate, up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime
+from rubiks import cube, clear_terminal, scramble_cube, print_cube, moveit, to_one_hot, up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime
 from stable_baselines3 import PPO
 import torch as th
 import datetime
+from gym import spaces
 
 date_time = datetime.datetime.now()
 date = date_time.strftime('%m%d%y')
@@ -15,15 +16,29 @@ date = date_time.strftime('%m%d%y')
 face_keys = ['F', 'R', 'B', 'L', 'U', 'D']
 colors = ['White', 'Red', 'Yellow', 'Orange', 'Blue', 'Green']
 
+observation_space = spaces.Box(low=0, high=5, shape=(54,), dtype=np.uint8)
+
 # Use observation space definition to numerically represent Rubik's cube
+# def flatten_cube(cube):
+#     flattened_cube = np.zeros((54, 6), dtype=np.uint8)
+#     for i in range(6):
+#         for j in range(9):
+#             face = cube[i]
+#             color = face[j]
+#             flattened_cube[i*9 + j] = color_encoding(color)
+#     flattened_cube = flattened_cube.flatten()
+#     print(f"flattened_cube: {flattened_cube}")
+#     print(f"flattened_cube shape: {flattened_cube.shape}")
+#     return flattened_cube
+
 def flatten_cube(cube):
-    flattened_cube = np.zeros((54, 6), dtype=np.uint8)
-    for i in range(6):
-        for j in range(9):
-            face = cube[i]
-            color = face[j]
-            flattened_cube[i*9 + j] = color_encoding(color)
-    flattened_cube = flattened_cube.flatten()
+    flattened_cube = np.zeros(54, dtype=np.uint8)
+    face_order = ['F', 'R', 'B', 'L', 'U', 'D']
+    for face_idx, face in enumerate(face_order):
+        for row in range(3):
+            for col in range(3):
+                color = cube[face][row, col]
+                flattened_cube[face_idx * 9 + row * 3 + col] = color
     print(f"flattened_cube: {flattened_cube}")
     print(f"flattened_cube shape: {flattened_cube.shape}")
     return flattened_cube
@@ -45,8 +60,9 @@ def color_encoding(color):
 
 class RubiksCubeEnv(gym.Env):
     def __init__(self, scramble=0, time_limit=10):
-        self.action_space = gym.spaces.Discrete(12)  # Assuming 12 possible rotations
-        self.observation_space = gym.spaces.MultiBinary(324)
+        self.action_space = spaces.Discrete(12)  # Assuming 12 possible rotations
+        self.observation_space = observation_space
+        # self.observation_space = gym.spaces.MultiBinary(324)
         self.current_state = np.zeros((324,), dtype=np.uint8)  # Initial solved state
         self.action_to_function = [up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime]
         self.cube = self.initialize_cube()
@@ -62,14 +78,15 @@ class RubiksCubeEnv(gym.Env):
 
     def initialize_cube(self):
         # Initialize the cube
-        cube = {
-            'F': np.array([[[1, 0, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # White
-            'R': np.array([[[0, 1, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Red
-            'B': np.array([[[0, 0, 1, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Yellow
-            'L': np.array([[[0, 0, 0, 1, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Orange
-            'U': np.array([[[0, 0, 0, 0, 1, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Blue
-            'D': np.array([[[0, 0, 0, 0, 0, 1] for _ in range(3)] for _ in range(3)], dtype=np.uint8)  # Green
-        }
+        # cube = {
+        #     'F': np.array([[[1, 0, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # White
+        #     'R': np.array([[[0, 1, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Red
+        #     'B': np.array([[[0, 0, 1, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Yellow
+        #     'L': np.array([[[0, 0, 0, 1, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Orange
+        #     'U': np.array([[[0, 0, 0, 0, 1, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Blue
+        #     'D': np.array([[[0, 0, 0, 0, 0, 1] for _ in range(3)] for _ in range(3)], dtype=np.uint8)  # Green
+        # }
+        to_one_hot(cube)
         return cube
 
     def reset(self, seed=None):
@@ -175,7 +192,7 @@ def train_rubiks_cube_solver():
     model = PPO("MlpPolicy", env, verbose=1, policy_kwargs=policy_kwargs)
     print(model.policy)
 
-    training = True
+    training = False
     if training:
         for scrambles in range(1, 6):
             env.scrambles = scrambles

@@ -360,10 +360,6 @@ def cubeinit(cube):
     sleep(1)
     None
 
-# def onehotstate(cube):
-#     concatenated_array = np.concatenate([cube[face].flatten() for face in ['U', 'D', 'F', 'B', 'L', 'R']])
-#     return concatenated_array
-
 def to_one_hot(cube):
     one_hot_cube = {}
     for face, grid in cube.items():
@@ -394,6 +390,6 @@ print_cube(cube)
 # moveit(cube, left)
 # moveit(cube, left_prime)
 
-# scramble_cube(cube, 5)
-# print_cube(cube)
+scramble_cube(cube, 5)
+print_cube(cube)
 # print(onehotstate(cube))
