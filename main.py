@@ -169,7 +169,7 @@ def train_rubiks_cube_solver():
 
     # Custom Neural Network Architecture (more complex)
     policy_kwargs = dict(activation_fn=th.nn.ReLU,
-                     net_arch=dict(pi=[128, 64, 64], vf=[128, 64, 64]))
+                     net_arch=dict(pi=[256, 256, 256, 256, 256], vf=[256, 256, 256, 256, 256]))
 
     # Create PPO agent
     model = PPO("MlpPolicy", env, verbose=1, policy_kwargs=policy_kwargs)
@@ -177,33 +177,33 @@ def train_rubiks_cube_solver():
 
     training = False
     if training:
-        for scrambles in range(1, 6):
+        for scrambles in range(1, 21):
             env.scrambles = scrambles
             env.time_limit = scrambles ** 2
             print(f"training with {scrambles} scrambles, time limit: {env.time_limit}")
             env.reset()
-            model.learn(total_timesteps=20000 + 20000 * scrambles)
+            model.learn(total_timesteps=50000 * scrambles)
 
-            model.save("models/"f"model-{date}--{scrambles}s")
+            model.save("models/"f"model-{date}--50k-{scrambles}s")
 
         # Save the trained model
-        model.save("models/" + f"model-{date}-complete")
+        model.save("models/" + f"model-{date}--50k-complete")
 
     testing = True
     if testing:
         stats = []
         for _ in range(1, 11):
             # Load a trained agent to run it
-            reloaded_model = PPO.load("models/" + f"model-{date}-complete")
+            reloaded_model = PPO.load("models/" + f"model-050824--4s")
 
             # Enjoy trained agent
-            env.scrambles = 5
-            env.time_limit = 10
+            env.scrambles = 4
+            env.time_limit = 16
             obs, _ = env.reset()
             clear_terminal()
             print("Scrambled cube")
             env.render()
-            sleep(0.1)
+            sleep(0.3)
             
             for i in range(100):
                 action_index, _ = reloaded_model.predict(obs)
@@ -217,7 +217,7 @@ def train_rubiks_cube_solver():
                 # Step through the environment using the selected action
                 env.render()
 
-                sleep(0.1)
+                sleep(0.3)
 
                 if done:
                     if env.is_solved():
@@ -226,7 +226,7 @@ def train_rubiks_cube_solver():
                     else:
                         print(f"Agent timed out after {i+1} moves.")
                         stats.append("0")
-                    sleep(0.2)
+                    sleep(0.6)
                     break
         print(f"Solves: {stats.count('1')}/{len(stats)}")
 
