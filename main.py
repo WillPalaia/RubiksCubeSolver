@@ -62,14 +62,14 @@ class RubiksCubeEnv(gym.Env):
 
     def initialize_cube(self):
         # Initialize the cube
-        cube = {
-            'F': np.array([[[1, 0, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # White
-            'R': np.array([[[0, 1, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Red
-            'B': np.array([[[0, 0, 1, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Yellow
-            'L': np.array([[[0, 0, 0, 1, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Orange
-            'U': np.array([[[0, 0, 0, 0, 1, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Blue
-            'D': np.array([[[0, 0, 0, 0, 0, 1] for _ in range(3)] for _ in range(3)], dtype=np.uint8)  # Green
-        }
+        # cube = {
+        #     'F': np.array([[[1, 0, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # White
+        #     'R': np.array([[[0, 1, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Red
+        #     'B': np.array([[[0, 0, 1, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Yellow
+        #     'L': np.array([[[0, 0, 0, 1, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Orange
+        #     'U': np.array([[[0, 0, 0, 0, 1, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Blue
+        #     'D': np.array([[[0, 0, 0, 0, 0, 1] for _ in range(3)] for _ in range(3)], dtype=np.uint8)  # Green
+        # }
 
         return cube
 
@@ -86,19 +86,62 @@ class RubiksCubeEnv(gym.Env):
         return self.current_state, {}
 
     def is_solved(self):
-        for face in self.cube.values():
-            # Convert face to a NumPy array if it's not already one
-            if isinstance(face, list):
-                face = np.array(face)
+        # Define the solved pattern
+        solved_pattern = {
+            'F': np.array([
+                [[0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 0]],
+                [[0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1]],
+                [[0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 0]]
+            ], dtype=np.uint8),
+            'R': np.array([
+                [[0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1]],
+                [[0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 0]],
+                [[0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1]]
+            ], dtype=np.uint8),
+            'B': np.array([
+                [[1, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0], [1, 0, 0, 0, 0, 0]],
+                [[0, 0, 1, 0, 0, 0], [1, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0]],
+                [[1, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0], [1, 0, 0, 0, 0, 0]]
+            ], dtype=np.uint8),
+            'L': np.array([
+                [[0, 0, 1, 0, 0, 0], [1, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0]],
+                [[1, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0], [1, 0, 0, 0, 0, 0]],
+                [[0, 0, 1, 0, 0, 0], [1, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0]]
+            ], dtype=np.uint8),
+            'U': np.array([
+                [[0, 0, 0, 1, 0, 0], [0, 1, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0]],
+                [[0, 1, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0], [0, 1, 0, 0, 0, 0]],
+                [[0, 0, 0, 1, 0, 0], [0, 1, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0]]
+            ], dtype=np.uint8),
+            'D': np.array([
+                [[0, 1, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0], [0, 1, 0, 0, 0, 0]],
+                [[0, 0, 0, 1, 0, 0], [0, 1, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0]],
+                [[0, 1, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0], [0, 1, 0, 0, 0, 0]]
+            ], dtype=np.uint8)
+        }
 
-            # Proceed with the original logic
-            reference_encoding = face[0, 0]
-            for row in face:
-                for color_vector in row:
-                    if not np.array_equal(color_vector, reference_encoding):
-                        return False  # Found a square that doesn't match the reference, so the cube isn't solved
+        # Compare each face with the solved pattern
+        for face_key, face_value in self.cube.items():
+            if not np.array_equal(face_value, solved_pattern[face_key]):
+                return False  # Current face doesn't match the pattern, so the cube isn't solved
 
-        return True  # All squares on all faces match their respective references, so the cube is solved
+        return True  # All faces match the pattern, so the cube is solved
+
+
+    # def is_solved(self):
+    #     for face in self.cube.values():
+    #         # Convert face to a NumPy array if it's not already one
+    #         if isinstance(face, list):
+    #             face = np.array(face)
+
+    #         # Proceed with the original logic
+    #         reference_encoding = face[0, 0]
+    #         for row in face:
+    #             for color_vector in row:
+    #                 if not np.array_equal(color_vector, reference_encoding):
+    #                     return False  # Found a square that doesn't match the reference, so the cube isn't solved
+
+    #     return True  # All squares on all faces match their respective references, so the cube is solved
 
     def step(self, action):
         self.time += 1
