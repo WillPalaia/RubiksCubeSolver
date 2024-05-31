@@ -3,7 +3,7 @@ from time import sleep
 import numpy as np
 import gymnasium as gym
 import rubiks
-from rubiks import cube, clear_terminal, scramble_cube, print_cube, moveit, to_one_hot, up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime
+from rubiks import cube, clear_terminal, scramble_cube, print_cube, moveit, up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime
 from stable_baselines3 import PPO
 import torch as th
 import datetime
@@ -43,20 +43,21 @@ def flatten_cube(cube):
     print(f"flattened_cube shape: {flattened_cube.shape}")
     return flattened_cube
 
-def color_encoding(color):
-    #gets a one hot encoding for each color numpy
-    if color == "white":
-        return np.array([1, 0, 0, 0, 0, 0], dtype=np.uint8)
-    elif color == "red":
-        return np.array([0, 1, 0, 0, 0, 0], dtype=np.uint8)
-    elif color == "yellow":
-        return np.array([0, 0, 1, 0, 0, 0], dtype=np.uint8)
-    elif color == "orange":
-        return np.array([0, 0, 0, 1, 0, 0], dtype=np.uint8)
-    elif color == "blue":
-        return np.array([0, 0, 0, 0, 1, 0], dtype=np.uint8)
-    elif color == "green":
-        return np.array([0, 0, 0, 0, 0, 1], dtype=np.uint8)
+# NOT NECESSARY SINCE NOT USING ONE HOT
+# def color_encoding(color):
+#     #gets a one hot encoding for each color numpy
+#     if color == "white":
+#         return np.array([1, 0, 0, 0, 0, 0], dtype=np.uint8)
+#     elif color == "red":
+#         return np.array([0, 1, 0, 0, 0, 0], dtype=np.uint8)
+#     elif color == "yellow":
+#         return np.array([0, 0, 1, 0, 0, 0], dtype=np.uint8)
+#     elif color == "orange":
+#         return np.array([0, 0, 0, 1, 0, 0], dtype=np.uint8)
+#     elif color == "blue":
+#         return np.array([0, 0, 0, 0, 1, 0], dtype=np.uint8)
+#     elif color == "green":
+#         return np.array([0, 0, 0, 0, 0, 1], dtype=np.uint8)
 
 class RubiksCubeEnv(gym.Env):
     def __init__(self, scramble=0, time_limit=10):
@@ -79,14 +80,21 @@ class RubiksCubeEnv(gym.Env):
     def initialize_cube(self):
         # Initialize the cube
         cube = {
-            'F': np.array([[[1, 0, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # White
-            'R': np.array([[[0, 1, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Red
-            'B': np.array([[[0, 0, 1, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Yellow
-            'L': np.array([[[0, 0, 0, 1, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Orange
-            'U': np.array([[[0, 0, 0, 0, 1, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Blue
-            'D': np.array([[[0, 0, 0, 0, 0, 1] for _ in range(3)] for _ in range(3)], dtype=np.uint8)  # Green
+            'F': np.array([[0, 0, 0] for _ in range(3)], dtype=np.uint8),
+            'R': np.array([[1, 1, 1] for _ in range(3)], dtype=np.uint8),
+            'B': np.array([[2, 2, 2] for _ in range(3)], dtype=np.uint8),
+            'L': np.array([[3, 3, 3] for _ in range(3)], dtype=np.uint8),
+            'U': np.array([[4, 4, 4] for _ in range(3)], dtype=np.uint8),
+            'D': np.array([[5, 5, 5] for _ in range(3)], dtype=np.uint8)
         }
         return cube
+
+    # Used to retrieve the cube's state, ensuring that the state representation is consistent and encapsulated within the class
+    def get_state(self):
+        flattened_state = []
+        for face in ['F', 'R', 'B', 'L', 'U', 'D']:
+            flattened_state.extend(self.state[face].flatten())
+        return np.array(flattened_state, dtype=np.uint8)
 
     def reset(self, seed=None):
         numscrambles = self.scrambles

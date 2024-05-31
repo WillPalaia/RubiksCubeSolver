@@ -360,16 +360,17 @@ def cubeinit(cube):
     sleep(1)
     None
 
-def to_one_hot(cube):
-    one_hot_cube = {}
-    for face, grid in cube.items():
-        one_hot_face = np.zeros((3, 3, 6), dtype=np.uint8)
-        for i in range(3):
-            for j in range(3):
-                color = grid[i, j]
-                one_hot_face[i, j, color] = 1
-        one_hot_cube[face] = one_hot_face
-    return one_hot_cube
+# NOT NECESSARY, SINCE NOT USING ONE HOTf
+# def to_one_hot(cube):
+#     one_hot_cube = {}
+#     for face, grid in cube.items():
+#         one_hot_face = np.zeros((3, 3, 6), dtype=np.uint8)
+#         for i in range(3):
+#             for j in range(3):
+#                 color = grid[i, j]
+#                 one_hot_face[i, j, color] = 1
+#         one_hot_cube[face] = one_hot_face
+#     return one_hot_cube
 
 ''' ACTIONS BELOW '''
 
