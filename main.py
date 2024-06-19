@@ -203,7 +203,7 @@ def train_rubiks_cube_solver():
             clear_terminal()
             print("Scrambled cube")
             env.render()
-            sleep(0.3)
+            sleep(0.5)
             
             for i in range(100):
                 action_index, _ = reloaded_model.predict(obs)
@@ -217,7 +217,7 @@ def train_rubiks_cube_solver():
                 # Step through the environment using the selected action
                 env.render()
 
-                sleep(0.3)
+                sleep(0.5)
 
                 if done:
                     if env.is_solved():
@@ -226,7 +226,7 @@ def train_rubiks_cube_solver():
                     else:
                         print(f"Agent timed out after {i+1} moves.")
                         stats.append("0")
-                    sleep(0.6)
+                    sleep(1)
                     break
         print(f"Solves: {stats.count('1')}/{len(stats)}")
 
