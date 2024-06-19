@@ -304,14 +304,21 @@ def scramble_cube(cube, num_moves, printscramble=True):
     moves = list(move_functions.keys())
     movelist = []
     timestep = 0.5
+    last_move = None
 
     # cubeinit(cube)
 
     for _ in range(num_moves):
+        # Filter moves to exclude the inverse of the last move
+        if last_move:
+            filtered_moves = [move for move in moves if move != last_move + "_prime" and move != last_move[:-6]]
+        else:
+            filtered_moves = moves
         # clear_terminal()
-        move = random.choice(moves)
+        move = random.choice(filtered_moves)
         movelist.append(move)
         move_functions[move](cube)  # Apply the selected move to the cube
+        last_move = move
         
         # print(f"Scrambling {num_moves} times... \n")
         # print_cube(cube)

@@ -31,9 +31,10 @@ def flatten_cube(cube):
 class RubiksCubeEnv(gym.Env):
     def __init__(self, scramble=0, time_limit=10):
         self.action_space = gym.spaces.Discrete(12)  # Assuming 12 possible rotations
-        self.observation_space = gym.spaces.Discrete(54)
+        self.observation_space = gym.spaces.MultiDiscrete([6] * 54)
         # self.observation_space = gym.spaces.MultiBinary(324)
-        self.current_state = np.zeros((54,), dtype=np.uint8)  # Initial solved state
+        self.current_state = np.array(list(cube.values())).flatten()
+        print(f"Initial State: {self.current_state}")
         self.action_to_function = [up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime]
         self.cube = self.initialize_cube()
         self.totalsteps = 0
@@ -158,7 +159,7 @@ def train_rubiks_cube_solver():
 
     # Create PPO agent
     model = PPO("MlpPolicy", env, verbose=1) # policy_kwargs=policy_kwargs
-    print(model.policy)
+    # print(model.policy)
 
     training = True
     if training:
@@ -216,4 +217,6 @@ def train_rubiks_cube_solver():
         print(f"Solves: {stats.count('1')}/{len(stats)}")
 
 if __name__ == "__main__":
-    train_rubiks_cube_solver()
+    scramble_cube(cube, 5, True)
+    print(cube)
+    # train_rubiks_cube_solver()
