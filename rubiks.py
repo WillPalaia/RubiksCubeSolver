@@ -8,17 +8,6 @@ from time import sleep
 # Define colors and faces
 face_keys = ['F', 'R', 'B', 'L', 'U', 'D']
 colors = ['White', 'Red', 'Yellow', 'Orange', 'Blue', 'Green']
-# Initialize the cube
-# cube = {face: [[colors[i] for _ in range(3)] for _ in range(3)] for i, face in enumerate(face_keys)}
-# change cube to nparray and fix all functions
-# cube = {
-#     'F': np.array([[[1, 0, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # White
-#     'R': np.array([[[0, 1, 0, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Red
-#     'B': np.array([[[0, 0, 1, 0, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Yellow
-#     'L': np.array([[[0, 0, 0, 1, 0, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Orange
-#     'U': np.array([[[0, 0, 0, 0, 1, 0] for _ in range(3)] for _ in range(3)], dtype=np.uint8),  # Blue
-#     'D': np.array([[[0, 0, 0, 0, 0, 1] for _ in range(3)] for _ in range(3)], dtype=np.uint8)  # Green
-# }
 
 cube = {
     'F': np.array([[0, 0, 0] for _ in range(3)], dtype=np.uint8),
@@ -28,7 +17,6 @@ cube = {
     'U': np.array([[4, 4, 4] for _ in range(3)], dtype=np.uint8),
     'D': np.array([[5, 5, 5] for _ in range(3)], dtype=np.uint8)
 }
-
 
 def clear_terminal():
     os_name = platform.system()
@@ -360,37 +348,25 @@ def cubeinit(cube):
     sleep(1)
     None
 
-# NOT NECESSARY, SINCE NOT USING ONE HOTf
-# def to_one_hot(cube):
-#     one_hot_cube = {}
-#     for face, grid in cube.items():
-#         one_hot_face = np.zeros((3, 3, 6), dtype=np.uint8)
-#         for i in range(3):
-#             for j in range(3):
-#                 color = grid[i, j]
-#                 one_hot_face[i, j, color] = 1
-#         one_hot_cube[face] = one_hot_face
-#     return one_hot_cube
-
 ''' ACTIONS BELOW '''
 
-# print(cube)
-# cubeinit(cube)
-print_cube(cube)
-# print("\n")
-# moveit(cube, down)
-# moveit(cube, down_prime)
-# moveit(cube, up)
-# moveit(cube, up_prime)
-# moveit(cube, front)
-# moveit(cube, front_prime)
-# moveit(cube, back)
-# moveit(cube, back_prime)
-# moveit(cube, right)
-# moveit(cube, right_prime)
-# moveit(cube, left)
-# moveit(cube, left_prime)
+if __name__ == "__main__":
+    # print(cube)
+    # cubeinit(cube)
+    print_cube(cube)
+    # print("\n")
+    moveit(cube, down)
+    moveit(cube, down_prime)
+    # moveit(cube, up)
+    # moveit(cube, up_prime)
+    moveit(cube, front)
+    moveit(cube, front_prime)
+    # moveit(cube, back)
+    # moveit(cube, back_prime)
+    # moveit(cube, right)
+    # moveit(cube, right_prime)
+    # moveit(cube, left)
+    # moveit(cube, left_prime)
 
-# scramble_cube(cube, 5)
-# print_cube(cube)
-# print(to_one_hot(cube))
+    scramble_cube(cube, 5)
+    print_cube(cube)
