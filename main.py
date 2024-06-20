@@ -32,23 +32,28 @@ class RubiksCubeEnv(gym.Env):
     def __init__(self, scramble=0, time_limit=10):
         self.action_space = gym.spaces.Discrete(12)  # Assuming 12 possible rotations
         self.observation_space = gym.spaces.MultiDiscrete([6] * 54)
-        # self.observation_space = gym.spaces.MultiBinary(324)
-        self.current_state = np.array(list(cube.values())).flatten()
-        print(f"Initial State: {self.current_state}")
-        self.action_to_function = [up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime]
-        self.cube = self.initialize_cube()
-        self.totalsteps = 0
 
+        self.cube = self.initialize_cube()
+        self.current_state = np.array(list(cube.values())).flatten()
+        self.action_to_function = [up, down, left, right, front, back, up_prime, down_prime, left_prime, right_prime, front_prime, back_prime]
+
+        self.totalsteps = 0
         self.scrambles = scramble
         self.time_limit = time_limit
-
         self.prev_numscrambles = 0
         self.prev_totalsteps = 0
         self.solved = 0
         self.timedout = 0
 
-    def initialize_cube(self):
-        # Initialize the cube
+    def initialize_cube(self):    
+        cube = {
+            'F': np.array([[0, 0, 0] for _ in range(3)], dtype=np.uint8),
+            'R': np.array([[1, 1, 1] for _ in range(3)], dtype=np.uint8),
+            'B': np.array([[2, 2, 2] for _ in range(3)], dtype=np.uint8),
+            'L': np.array([[3, 3, 3] for _ in range(3)], dtype=np.uint8),
+            'U': np.array([[4, 4, 4] for _ in range(3)], dtype=np.uint8),
+            'D': np.array([[5, 5, 5] for _ in range(3)], dtype=np.uint8)
+        }
         return cube
 
     # Used to retrieve the cube's state, ensuring that the state representation is consistent and encapsulated within the class
@@ -59,31 +64,13 @@ class RubiksCubeEnv(gym.Env):
         return np.array(flattened_state, dtype=np.uint8)
 
     def reset(self, seed=None):
-        numscrambles = self.scrambles
-
         self.cube = self.initialize_cube()
-        self.cube = scramble_cube(self.cube, numscrambles, False)
-        state = np.array(list(self.cube.values())).flatten()
-        self.current_state = state
+        self.cube = scramble_cube(self.cube, self.scrambles, False)
+        self.current_state = np.array(list(self.cube.values())).flatten()
         self.time = 0
-        self.prev_numscrambles = numscrambles
+        self.prev_numscrambles = self.scrambles
 
         return self.current_state, {}
-
-    def is_solved(self):
-        for face in self.cube.values():
-            # Convert face to a NumPy array if it's not already one
-            if isinstance(face, list):
-                face = np.array(face)
-
-            # Proceed with the original logic
-            reference_encoding = face[0, 0]
-            for row in face:
-                for color_vector in row:
-                    if not np.array_equal(color_vector, reference_encoding):
-                        return False  # Found a square that doesn't match the reference, so the cube isn't solved
-
-        return True  # All squares on all faces match their respective references, so the cube is solved
 
     def step(self, action):
         self.time += 1
@@ -101,7 +88,7 @@ class RubiksCubeEnv(gym.Env):
         #if nummoves > math.floor(min(11 + (self.prev_totalsteps * math.e ** (-self.prev_totalsteps/3000000)) / 40000, 30)):
         #    print(f"Allowed {nummoves} steps")
 
-        state = np.array(list(self.cube.values())).flatten()
+        self.current_state = np.array(list(self.cube.values())).flatten()
         
         self.prev_totalsteps = self.totalsteps
 
@@ -109,7 +96,7 @@ class RubiksCubeEnv(gym.Env):
             reward = 0 # maybe positive reward for solving the cube
             # reward = (1500 / math.log(self.time + 1)) - 300 # Reward for solving the cube based on number of steps
             self.solved += 1
-            return state, reward, True, False, {}
+            return self.current_state, reward, True, False, {}
         
         # if self.manhattan_distance(self.cube) > prev_state:
         #     reward = (prev_state - self.manhattan_distance(self.cube)) * 0.6 - 2 # need to change this function to increase magnitude as ep_len_mean drops
@@ -130,7 +117,14 @@ class RubiksCubeEnv(gym.Env):
         # if time_out:
         #     reward = -100  # Penalty for exceeding the time limit
 
-        return state, reward, time_out, False, {}
+        return self.current_state, reward, time_out, False, {}
+    
+    def is_solved(self):
+        for face in self.cube.values():
+            reference_color = face[0, 0]
+            if not np.all(face == reference_color):
+                return False
+        return True
 
     def render(self, mode='human'):
         if mode != 'human':
@@ -158,14 +152,17 @@ def train_rubiks_cube_solver():
                      net_arch=dict(pi=[128, 64, 64], vf=[128, 64, 64]))
 
     # Create PPO agent
-    model = PPO("MlpPolicy", env, verbose=1) # policy_kwargs=policy_kwargs
+    model = PPO("MlpPolicy", env, verbose=1, policy_kwargs=policy_kwargs)
     # print(model.policy)
 
     training = True
     if training:
         for scrambles in range(1, 6):
             env.scrambles = scrambles
-            env.time_limit = scrambles ** 2
+            if scrambles == 1:
+                env.time_limit = 2
+            else:
+                env.time_limit = scrambles ** 2
             print(f"training with {scrambles} scrambles, time limit: {env.time_limit}")
             env.reset()
             model.learn(total_timesteps=20000 + 20000 * scrambles)
@@ -217,6 +214,4 @@ def train_rubiks_cube_solver():
         print(f"Solves: {stats.count('1')}/{len(stats)}")
 
 if __name__ == "__main__":
-    scramble_cube(cube, 5, True)
-    print(cube)
-    # train_rubiks_cube_solver()
+    train_rubiks_cube_solver()

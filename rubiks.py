@@ -375,5 +375,5 @@ if __name__ == "__main__":
     # moveit(cube, left)
     # moveit(cube, left_prime)
 
-    scramble_cube(cube, 5)
+    # scramble_cube(cube, 5)
     print_cube(cube)
