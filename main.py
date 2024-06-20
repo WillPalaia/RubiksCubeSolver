@@ -82,7 +82,11 @@ class RubiksCubeEnv(gym.Env):
         action = int(action)
         self.action_to_function[action](self.cube) # retrieves action from action_to_function list, passing the current state as an argument
         
-        done = self.is_solved()
+        pattern = True
+        if pattern:
+            self.action_to_function[action](self.cube) # does it again!
+
+        done = self.patterns() # self.is_solved()
         time_out = self.time >= self.time_limit  # Limit to this many moves
         
         #if nummoves > math.floor(min(11 + (self.prev_totalsteps * math.e ** (-self.prev_totalsteps/3000000)) / 40000, 30)):
@@ -125,6 +129,20 @@ class RubiksCubeEnv(gym.Env):
             if not np.all(face == reference_color):
                 return False
         return True
+    
+    def patterns(self):
+        expected_pattern = np.array([
+            0, 2, 0, 2, 0, 2, 0, 2, 0,
+            1, 3, 1, 3, 1, 3, 1, 3, 1,
+            2, 0, 2, 0, 2, 0, 2, 0, 2,
+            3, 1, 3, 1, 3, 1, 3, 1, 3,
+            4, 5, 4, 5, 4, 5, 4, 5, 4,
+            5, 4, 5, 4, 5, 4, 5, 4, 5
+        ])
+
+        flattened_cube = np.array(list(self.cube.values())).flatten()
+        
+        return np.array_equal(flattened_cube, expected_pattern)
 
     def render(self, mode='human'):
         if mode != 'human':
@@ -213,5 +231,56 @@ def train_rubiks_cube_solver():
                     break
         print(f"Solves: {stats.count('1')}/{len(stats)}")
 
+def train_patterns():
+    env = RubiksCubeEnv()
+    env.reset()
+
+    # Custom Neural Network Architecture (more complex)
+    policy_kwargs = dict(activation_fn=th.nn.ReLU,
+                     net_arch=dict(pi=[128, 64, 64], vf=[128, 64, 64]))
+
+    # Create PPO agent
+    model = PPO("MlpPolicy", env, verbose=1, policy_kwargs=policy_kwargs)
+
+    training = False
+    if training:
+        env.scrambles = 0
+        env.time_limit = 30
+        model.learn(total_timesteps=100000)
+
+        model.save("models/checkeredpattern")
+
+    testing = True
+    if testing:
+        # Load a trained agent to run it
+        reloaded_model = PPO.load("models/checkeredpattern")
+
+        # Enjoy trained agent
+        env.scrambles = 0
+        env.time_limit = 30
+        obs, _ = env.reset()
+        clear_terminal()
+        
+        for i in range(100):
+            action_index, _ = reloaded_model.predict(obs)
+            obs, rewards, done, _, info = env.step(action_index)
+            action_function = env.action_to_function[action_index]
+
+            clear_terminal()
+            # Apply the action to the environment
+            print(action_function.__name__.capitalize().replace("_", " "))
+
+            # Step through the environment using the selected action
+            env.render()
+
+            sleep(1)
+
+            if done:
+                if env.patterns():
+                    print(f"nerd flowers for you <3")
+                sleep(2)
+                break
+
 if __name__ == "__main__":
-    train_rubiks_cube_solver()
+    train_patterns()
+    # train_rubiks_cube_solver()
