@@ -175,7 +175,7 @@ def train_rubiks_cube_solver():
     model = PPO("MlpPolicy", env, verbose=1, policy_kwargs=policy_kwargs)
     print(model.policy)
 
-    training = False
+    training = True
     if training:
         for scrambles in range(1, 21):
             env.scrambles = scrambles
@@ -189,7 +189,7 @@ def train_rubiks_cube_solver():
         # Save the trained model
         model.save("models/" + f"model-{date}--50k-complete")
 
-    testing = True
+    testing = False
     if testing:
         stats = []
         for _ in range(1, 11):
